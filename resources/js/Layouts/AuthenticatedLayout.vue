@@ -39,6 +39,24 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     Dashboard
                                 </NavLink>
+                                <NavLink
+                                    :href="route('event-types.index')"
+                                    :active="route().current('event-types.*')"
+                                >
+                                    Event Types
+                                </NavLink>
+                                <NavLink
+                                    :href="route('availability.edit')"
+                                    :active="route().current('availability.*')"
+                                >
+                                    Availability
+                                </NavLink>
+                                <NavLink
+                                    :href="route('bookings.index')"
+                                    :active="route().current('bookings.*')"
+                                >
+                                    Bookings
+                                </NavLink>
                             </div>
                         </div>
 
@@ -145,6 +163,24 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('dashboard')"
                         >
                             Dashboard
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('event-types.index')"
+                            :active="route().current('event-types.*')"
+                        >
+                            Event Types
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('availability.edit')"
+                            :active="route().current('availability.*')"
+                        >
+                            Availability
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('bookings.index')"
+                            :active="route().current('bookings.*')"
+                        >
+                            Bookings
                         </ResponsiveNavLink>
                     </div>
 

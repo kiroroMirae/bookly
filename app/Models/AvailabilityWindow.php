@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Database\Factories\AvailabilityWindowFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AvailabilityWindow extends Model
 {
-    /** @use HasFactory<\Database\Factories\AvailabilityWindowFactory> */
+    /** @use HasFactory<AvailabilityWindowFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -17,8 +19,8 @@ class AvailabilityWindow extends Model
         'end_time',
     ];
 
-    /** @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this> */
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    /** @return BelongsTo<User, $this> */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

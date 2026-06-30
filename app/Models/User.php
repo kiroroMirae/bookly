@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -49,20 +50,20 @@ class User extends Authenticatable
         ];
     }
 
-    /** @return \Illuminate\Database\Eloquent\Relations\HasMany<EventType, $this> */
-    public function eventTypes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /** @return HasMany<EventType, $this> */
+    public function eventTypes(): HasMany
     {
         return $this->hasMany(EventType::class);
     }
 
-    /** @return \Illuminate\Database\Eloquent\Relations\HasMany<AvailabilityWindow, $this> */
-    public function availabilityWindows(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /** @return HasMany<AvailabilityWindow, $this> */
+    public function availabilityWindows(): HasMany
     {
         return $this->hasMany(AvailabilityWindow::class);
     }
 
-    /** @return \Illuminate\Database\Eloquent\Relations\HasMany<Booking, $this> */
-    public function bookings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /** @return HasMany<Booking, $this> */
+    public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class, 'host_user_id');
     }

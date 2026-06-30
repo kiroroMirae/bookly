@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Database\Factories\EventTypeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EventType extends Model
 {
-    /** @use HasFactory<\Database\Factories\EventTypeFactory> */
+    /** @use HasFactory<EventTypeFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -27,14 +30,14 @@ class EventType extends Model
         ];
     }
 
-    /** @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this> */
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    /** @return BelongsTo<User, $this> */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /** @return \Illuminate\Database\Eloquent\Relations\HasMany<Booking, $this> */
-    public function bookings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /** @return HasMany<Booking, $this> */
+    public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
     }

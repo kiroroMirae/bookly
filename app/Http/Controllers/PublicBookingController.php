@@ -28,8 +28,12 @@ class PublicBookingController extends Controller
             ->firstOrFail();
 
         $guestTimezone = $request->query('tz', 'UTC');
+        if (! in_array($guestTimezone, timezone_identifiers_list(), true)) {
+            $guestTimezone = 'UTC';
+        }
+
         $dateParam = $request->query('date');
-        $date = $dateParam
+        $date = $dateParam && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateParam)
             ? CarbonImmutable::parse($dateParam)
             : CarbonImmutable::today($eventType->user->timezone);
 

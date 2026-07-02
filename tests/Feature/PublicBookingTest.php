@@ -59,6 +59,34 @@ it('does not require authentication to view the booking page', function () {
         ->assertOk();
 });
 
+it('falls back to UTC when the timezone query param is invalid', function () {
+    $host = User::factory()->create(['username' => 'alice', 'timezone' => 'UTC']);
+    EventType::factory()->create(['user_id' => $host->id, 'slug' => 'coffee-chat', 'is_active' => true]);
+    AvailabilityWindow::factory()->create(['user_id' => $host->id, 'day_of_week' => 1]);
+
+    $this->get(route('booking.show', ['username' => 'alice', 'slug' => 'coffee-chat', 'tz' => 'Not/AZone']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('guestTimezone', 'UTC'));
+});
+
+it('keeps a valid timezone query param', function () {
+    $host = User::factory()->create(['username' => 'alice', 'timezone' => 'UTC']);
+    EventType::factory()->create(['user_id' => $host->id, 'slug' => 'coffee-chat', 'is_active' => true]);
+
+    $this->get(route('booking.show', ['username' => 'alice', 'slug' => 'coffee-chat', 'tz' => 'Asia/Kuala_Lumpur']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('guestTimezone', 'Asia/Kuala_Lumpur'));
+});
+
+it('falls back to today when the date query param is invalid', function () {
+    $host = User::factory()->create(['username' => 'alice', 'timezone' => 'UTC']);
+    EventType::factory()->create(['user_id' => $host->id, 'slug' => 'coffee-chat', 'is_active' => true]);
+
+    $this->get(route('booking.show', ['username' => 'alice', 'slug' => 'coffee-chat', 'date' => 'not-a-date']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('selectedDate', now('UTC')->format('Y-m-d')));
+});
+
 it('passes the event type details to the page', function () {
     $host = User::factory()->create(['username' => 'alice', 'name' => 'Alice Smith']);
     EventType::factory()->create([

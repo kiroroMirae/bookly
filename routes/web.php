@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventTypeController;
+use App\Http\Controllers\GuestBookingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicBookingController;
 use Illuminate\Foundation\Application;
@@ -18,9 +20,9 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::resource('event-types', EventTypeController::class);
@@ -39,6 +41,12 @@ Route::middleware('auth')->group(function () {
 require __DIR__.'/auth.php';
 
 // Public booking routes — registered LAST to avoid shadowing all named routes above
+Route::middleware('signed:relative')->group(function () {
+    Route::get('/{username}/{slug}/manage/{booking}', [GuestBookingController::class, 'show'])->name('booking.manage');
+    Route::patch('/{username}/{slug}/manage/{booking}/cancel', [GuestBookingController::class, 'cancel'])->name('booking.guest-cancel');
+    Route::patch('/{username}/{slug}/manage/{booking}/reschedule', [GuestBookingController::class, 'reschedule'])->name('booking.reschedule');
+});
+
 Route::get('/{username}/{slug}', [PublicBookingController::class, 'show'])->name('booking.show');
 Route::post('/{username}/{slug}', [PublicBookingController::class, 'store'])->name('booking.store');
 Route::get('/{username}/{slug}/confirmation/{booking}', [PublicBookingController::class, 'confirmation'])->name('booking.confirmation');

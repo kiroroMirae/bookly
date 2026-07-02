@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -24,13 +24,32 @@ const selectSlot = (slot) => {
     form.starts_at = slot.starts_at;
 };
 
-const changeDate = (date) => {
+const timezones =
+    typeof Intl.supportedValuesOf === 'function'
+        ? Intl.supportedValuesOf('timeZone')
+        : [props.guestTimezone];
+
+const reload = (params) => {
     router.get(
         route('booking.show', { username: props.host.username, slug: props.eventType.slug }),
-        { date, tz: props.guestTimezone },
+        { date: props.selectedDate, tz: props.guestTimezone, ...params },
         { preserveState: false }
     );
 };
+
+const changeDate = (date) => reload({ date });
+
+const changeTimezone = (tz) => reload({ tz });
+
+onMounted(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('tz')) {
+        const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (detected && detected !== props.guestTimezone) {
+            reload({ tz: detected });
+        }
+    }
+});
 
 const submit = () => {
     form.post(route('booking.store', { username: props.host.username, slug: props.eventType.slug }));
@@ -59,14 +78,29 @@ const today = new Date().toISOString().split('T')[0];
             </div>
 
             <div class="mb-6 rounded-lg bg-white p-6 shadow-sm">
-                <label class="mb-2 block text-sm font-medium text-gray-700">Select a date</label>
-                <input
-                    type="date"
-                    :value="selectedDate"
-                    :min="today"
-                    @change="changeDate($event.target.value)"
-                    class="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <label class="mb-2 block text-sm font-medium text-gray-700">Select a date</label>
+                        <input
+                            type="date"
+                            :value="selectedDate"
+                            :min="today"
+                            @change="changeDate($event.target.value)"
+                            class="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        />
+                    </div>
+                    <div>
+                        <label for="timezone" class="mb-2 block text-sm font-medium text-gray-700">Timezone</label>
+                        <select
+                            id="timezone"
+                            :value="guestTimezone"
+                            @change="changeTimezone($event.target.value)"
+                            class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:w-64"
+                        >
+                            <option v-for="tz in timezones" :key="tz" :value="tz">{{ tz }}</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <div class="mb-6 rounded-lg bg-white p-6 shadow-sm">

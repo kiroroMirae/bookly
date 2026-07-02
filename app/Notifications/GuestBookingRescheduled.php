@@ -9,7 +9,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\URL;
 
-class GuestBookingConfirmed extends Notification implements ShouldQueue
+class GuestBookingRescheduled extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -32,13 +32,12 @@ class GuestBookingConfirmed extends Notification implements ShouldQueue
         ], absolute: false));
 
         return (new MailMessage)
-            ->subject("Booking confirmed: {$booking->eventType->name}")
+            ->subject("Booking rescheduled: {$booking->eventType->name}")
             ->greeting("Hi {$booking->guest_name},")
-            ->line('Your booking has been confirmed.')
+            ->line('Your booking has been rescheduled.')
             ->line("**{$booking->eventType->name}** with {$booking->host->name}")
-            ->line($startsAt->format('l, F j, Y \a\t g:i A T'))
+            ->line("**New time:** {$startsAt->format('l, F j, Y \a\t g:i A T')}")
             ->line("Duration: {$booking->eventType->duration_minutes} minutes")
-            ->line('Need to make a change? Use the link below to cancel or reschedule.')
             ->action('Manage booking', $manageUrl);
     }
 }

@@ -8,7 +8,7 @@ use Carbon\CarbonImmutable;
 
 class SlotGenerator
 {
-    public function forDate(EventType $eventType, CarbonImmutable $date, string $guestTimezone): array
+    public function forDate(EventType $eventType, CarbonImmutable $date, string $guestTimezone, ?int $ignoreBookingId = null): array
     {
         $host = $eventType->user;
         $hostTimezone = $host->timezone;
@@ -31,6 +31,7 @@ class SlotGenerator
 
         $existingBookings = $host->bookings()
             ->whereNot('status', BookingStatus::Cancelled->value)
+            ->when($ignoreBookingId !== null, fn ($query) => $query->whereKeyNot($ignoreBookingId))
             ->where('starts_at', '<', $dayEndUtc)
             ->where('ends_at', '>', $dayStartUtc)
             ->get(['starts_at', 'ends_at']);

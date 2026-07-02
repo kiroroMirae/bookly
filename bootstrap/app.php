@@ -19,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+
+        $middleware->validateSignatures(except: ['date']);
     })
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command(SendBookingReminders::class)->daily();

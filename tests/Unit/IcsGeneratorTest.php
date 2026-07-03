@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\IcsGenerator;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
 
 uses(RefreshDatabase::class);
 
@@ -155,4 +156,98 @@ it('folds long lines at 75 octets without splitting multibyte characters', funct
 
     $unfolded = str_replace("\r\n ", '', $ics);
     expect($unfolded)->toContain('DESCRIPTION:'.trim($description));
+});
+
+// ── host feed ─────────────────────────────────────────────────────────────────
+
+/** @return array{0: User, 1: Collection<int, Booking>} */
+function makeIcsFeedHost(int $bookings = 2): array
+{
+    $host = User::factory()->create(['name' => 'Ann Host', 'email' => 'ann@example.com']);
+    $eventType = EventType::factory()->create([
+        'user_id' => $host->id,
+        'name' => 'Intro Call',
+        'description' => 'A quick chat.',
+        'duration_minutes' => 30,
+    ]);
+
+    $collection = collect(range(1, $bookings))->map(fn (int $day) => Booking::factory()->create([
+        'event_type_id' => $eventType->id,
+        'host_user_id' => $host->id,
+        'guest_name' => "Guest {$day}",
+        'guest_email' => "guest{$day}@example.com",
+        'starts_at' => "2026-07-1{$day} 14:00:00",
+        'ends_at' => "2026-07-1{$day} 14:30:00",
+    ]));
+
+    return [$host, $collection];
+}
+
+it('emits a single PUBLISH calendar wrapping one VEVENT per booking', function () {
+    [$host, $bookings] = makeIcsFeedHost(3);
+
+    $ics = (new IcsGenerator)->forHostFeed($host, $bookings);
+
+    expect(substr_count($ics, 'BEGIN:VCALENDAR'))->toBe(1)
+        ->and(substr_count($ics, 'END:VCALENDAR'))->toBe(1)
+        ->and(substr_count($ics, 'BEGIN:VEVENT'))->toBe(3)
+        ->and(substr_count($ics, 'END:VEVENT'))->toBe(3)
+        ->and($ics)->toContain('METHOD:PUBLISH')
+        ->and(strpos($ics, 'BEGIN:VCALENDAR'))->toBeLessThan(strpos($ics, 'BEGIN:VEVENT'))
+        ->and(strrpos($ics, 'END:VEVENT'))->toBeLessThan(strrpos($ics, 'END:VCALENDAR'));
+});
+
+it('names the feed calendar after the host', function () {
+    [$host, $bookings] = makeIcsFeedHost(1);
+
+    $unfolded = str_replace("\r\n ", '', (new IcsGenerator)->forHostFeed($host, $bookings));
+
+    expect($unfolded)->toContain('X-WR-CALNAME:Bookly — Ann Host');
+});
+
+it('keeps the stable UID and SEQUENCE per booking in the feed', function () {
+    [$host, $bookings] = makeIcsFeedHost(2);
+    $bookings->last()->update(['ics_sequence' => 3]);
+
+    $ics = (new IcsGenerator)->forHostFeed($host, $bookings->map->fresh());
+
+    expect($ics)->toContain("UID:booking-{$bookings->first()->id}@bookly")
+        ->and($ics)->toContain("UID:booking-{$bookings->last()->id}@bookly")
+        ->and($ics)->toContain('SEQUENCE:0')
+        ->and($ics)->toContain('SEQUENCE:3');
+});
+
+it('summarizes feed events from the host perspective with guest details in the description', function () {
+    [$host, $bookings] = makeIcsFeedHost(1);
+
+    $unfolded = str_replace("\r\n ", '', (new IcsGenerator)->forHostFeed($host, $bookings));
+
+    expect($unfolded)->toContain('SUMMARY:Intro Call with Guest 1')
+        ->and($unfolded)->toContain('Guest: Guest 1 (guest1@example.com)')
+        ->and($unfolded)->toContain('A quick chat.');
+});
+
+it('omits ORGANIZER and ATTENDEE lines from feed events', function () {
+    [$host, $bookings] = makeIcsFeedHost(2);
+
+    $ics = (new IcsGenerator)->forHostFeed($host, $bookings);
+
+    expect($ics)->not->toContain('ORGANIZER')
+        ->and($ics)->not->toContain('ATTENDEE');
+});
+
+it('folds feed lines at 75 octets with CRLF endings only', function () {
+    [$host, $bookings] = makeIcsFeedHost(2);
+
+    $ics = (new IcsGenerator)->forHostFeed($host, $bookings);
+
+    foreach (explode("\r\n", $ics) as $line) {
+        expect(strlen($line))->toBeLessThanOrEqual(75);
+    }
+
+    expect(preg_match('/(?<!\r)\n/', $ics))->toBe(0);
+});
+
+it('returns a plain text/calendar mime type for the feed', function () {
+    expect((new IcsGenerator)->feedMimeType())->toBe('text/calendar; charset=utf-8');
 });

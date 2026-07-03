@@ -3,6 +3,7 @@
 use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\AvailabilityOverrideController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CalendarFeedController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventTypeController;
 use App\Http\Controllers\GuestBookingController;
@@ -41,7 +42,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::post('/calendar-feed/regenerate', [CalendarFeedController::class, 'regenerate'])->name('calendar-feed.regenerate');
 });
+
+// Token-authenticated: calendar clients cannot log in, so the token is the secret.
+Route::get('/calendar/{token}.ics', [CalendarFeedController::class, 'show'])
+    ->where('token', '[A-Za-z0-9]+')
+    ->middleware('throttle:30,1')
+    ->name('calendar-feed.show');
 
 require __DIR__.'/auth.php';
 

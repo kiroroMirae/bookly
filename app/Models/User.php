@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -35,6 +36,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'calendar_feed_token',
     ];
 
     /**
@@ -72,5 +74,17 @@ class User extends Authenticatable
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class, 'host_user_id');
+    }
+
+    /**
+     * Return the calendar feed token, generating and persisting one on first use.
+     */
+    public function getOrCreateCalendarFeedToken(): string
+    {
+        if (blank($this->calendar_feed_token)) {
+            $this->forceFill(['calendar_feed_token' => Str::random(64)])->save();
+        }
+
+        return $this->calendar_feed_token;
     }
 }

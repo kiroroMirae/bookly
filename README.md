@@ -10,6 +10,7 @@ Calendly-style appointment scheduling built with Laravel 12, Inertia.js v2, and 
 - **Guest self-service** — signed email links let guests cancel or reschedule without logging in
 - **Host tools** — dashboard with upcoming bookings and shareable links, booking list with cancel/reschedule and completed/no-show marking, email notifications for every booking event, daily reminder command
 - **Booking policies** — per-event-type buffers before/after, minimum notice, rolling booking window, and daily booking caps enforced during slot generation
+- **Date overrides** — block specific dates or replace weekly hours for a single day (holidays, one-off schedule changes)
 
 ## Status
 
@@ -20,7 +21,8 @@ Calendly-style appointment scheduling built with Laravel 12, Inertia.js v2, and 
 | 3–4 | Availability, public booking, notifications | Done |
 | 5 | Guest self-service, dashboard, timezone UX | Done |
 | 6 | Booking policies, host booking management | Done |
-| Next | Candidates: ICS calendar attachments/feeds, date-range availability overrides, cancellation reason & audit trail | Planned |
+| 7 | Date-specific availability overrides | Done |
+| Next | Candidates: ICS calendar attachments/feeds, cancellation reason & audit trail | Planned |
 
 ## Stack
 

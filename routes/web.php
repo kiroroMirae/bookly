@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AvailabilityController;
+use App\Http\Controllers\AvailabilityOverrideController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventTypeController;
@@ -29,6 +30,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/availability', [AvailabilityController::class, 'edit'])->name('availability.edit');
     Route::put('/availability', [AvailabilityController::class, 'update'])->name('availability.update');
+    Route::post('/availability/overrides', [AvailabilityOverrideController::class, 'store'])->name('availability.overrides.store');
+    Route::delete('/availability/overrides/{override}', [AvailabilityOverrideController::class, 'destroy'])->name('availability.overrides.destroy');
 
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::patch('/bookings/{booking}', [BookingController::class, 'update'])->name('bookings.update');

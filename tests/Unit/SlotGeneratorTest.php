@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\BookingStatus;
+use App\Models\AvailabilityOverride;
 use App\Models\AvailabilityWindow;
 use App\Models\Booking;
 use App\Models\EventType;
@@ -312,4 +313,75 @@ it('does not count cancelled bookings toward the daily cap', function () {
     $slots = (new SlotGenerator)->forDate($eventType, $date, 'UTC');
 
     expect($slots)->not->toBeEmpty();
+})->afterEach(fn () => CarbonImmutable::setTestNow());
+
+// ── date overrides ────────────────────────────────────────────────────────────
+
+function addOverride(User $host, string $date, ?string $start = null, ?string $end = null): void
+{
+    AvailabilityOverride::factory()->create([
+        'user_id' => $host->id,
+        'date' => $date,
+        'start_time' => $start,
+        'end_time' => $end,
+    ]);
+}
+
+it('returns no slots on a date blocked by an override', function () {
+    $host = makeHost('UTC');
+    $eventType = makeEventType($host, 30);
+
+    CarbonImmutable::setTestNow('2025-01-05 00:00:00');
+    addWindow($host, 1, '09:00', '17:00');
+    addOverride($host, '2025-01-06'); // full-day block
+
+    $date = CarbonImmutable::parse('2025-01-06'); // Monday
+    $slots = (new SlotGenerator)->forDate($eventType, $date, 'UTC');
+
+    expect($slots)->toBeEmpty();
+})->afterEach(fn () => CarbonImmutable::setTestNow());
+
+it('custom-hour overrides replace the weekly windows for that date', function () {
+    $host = makeHost('UTC');
+    $eventType = makeEventType($host, 30);
+
+    CarbonImmutable::setTestNow('2025-01-05 00:00:00');
+    addWindow($host, 1, '09:00', '17:00');
+    addOverride($host, '2025-01-06', '13:00', '15:00'); // only 13-15 that Monday
+
+    $date = CarbonImmutable::parse('2025-01-06');
+    $slots = (new SlotGenerator)->forDate($eventType, $date, 'UTC');
+
+    expect($slots)->toHaveCount(4); // 13:00, 13:30, 14:00, 14:30
+    expect($slots[0]['starts_at'])->toContain('T13:00:00');
+    expect($slots[3]['starts_at'])->toContain('T14:30:00');
+})->afterEach(fn () => CarbonImmutable::setTestNow());
+
+it('overrides on other dates do not affect the requested date', function () {
+    $host = makeHost('UTC');
+    $eventType = makeEventType($host, 30);
+
+    CarbonImmutable::setTestNow('2025-01-05 00:00:00');
+    addWindow($host, 1, '09:00', '10:00'); // 2 slots on Mondays
+    addOverride($host, '2025-01-13'); // block the FOLLOWING Monday
+
+    $date = CarbonImmutable::parse('2025-01-06');
+    $slots = (new SlotGenerator)->forDate($eventType, $date, 'UTC');
+
+    expect($slots)->toHaveCount(2);
+})->afterEach(fn () => CarbonImmutable::setTestNow());
+
+it('a custom-hour override opens a date that has no weekly window', function () {
+    $host = makeHost('UTC');
+    $eventType = makeEventType($host, 30);
+
+    CarbonImmutable::setTestNow('2025-01-05 00:00:00');
+    // no weekly window for Tuesday
+    addOverride($host, '2025-01-07', '10:00', '11:00');
+
+    $date = CarbonImmutable::parse('2025-01-07'); // Tuesday
+    $slots = (new SlotGenerator)->forDate($eventType, $date, 'UTC');
+
+    expect($slots)->toHaveCount(2); // 10:00, 10:30
+    expect($slots[0]['starts_at'])->toContain('T10:00:00');
 })->afterEach(fn () => CarbonImmutable::setTestNow());

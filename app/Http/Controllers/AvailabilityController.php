@@ -12,14 +12,22 @@ class AvailabilityController extends Controller
 {
     public function edit(): Response
     {
-        $windows = auth()->user()
-            ->availabilityWindows()
+        $user = auth()->user();
+
+        $windows = $user->availabilityWindows()
             ->orderBy('day_of_week')
+            ->orderBy('start_time')
+            ->get();
+
+        $overrides = $user->availabilityOverrides()
+            ->whereDate('date', '>=', now($user->timezone)->toDateString())
+            ->orderBy('date')
             ->orderBy('start_time')
             ->get();
 
         return Inertia::render('Availability/Edit', [
             'windows' => $windows,
+            'overrides' => $overrides,
         ]);
     }
 

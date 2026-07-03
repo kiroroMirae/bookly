@@ -2,10 +2,15 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import InputError from '@/Components/InputError.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const props = defineProps({
     windows: {
+        type: Array,
+        required: true,
+    },
+    overrides: {
         type: Array,
         required: true,
     },
@@ -44,6 +49,42 @@ const removeWindow = (index) => {
 
 const submit = () => {
     form.put(route('availability.update'));
+};
+
+const blockAllDay = ref(true);
+
+const overrideForm = useForm({
+    date: '',
+    start_time: '13:00',
+    end_time: '15:00',
+});
+
+const today = new Date().toISOString().substring(0, 10);
+
+const submitOverride = () => {
+    overrideForm
+        .transform((data) => (blockAllDay.value ? { date: data.date } : data))
+        .post(route('availability.overrides.store'), {
+            preserveScroll: true,
+            onSuccess: () => overrideForm.reset('date'),
+        });
+};
+
+const deleteOverride = (override) => {
+    router.delete(route('availability.overrides.destroy', override.id), {
+        preserveScroll: true,
+    });
+};
+
+const formatOverrideDate = (isoDate) => {
+    const [year, month, day] = isoDate.substring(0, 10).split('-').map(Number);
+
+    return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
 };
 </script>
 
@@ -117,6 +158,94 @@ const submit = () => {
                             </PrimaryButton>
                         </div>
                     </form>
+                </div>
+
+                <div class="mt-6 overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
+                    <h3 class="text-base font-semibold text-gray-800">Date overrides</h3>
+                    <p class="mb-6 mt-1 text-sm text-gray-600">
+                        Block a specific date or replace your weekly hours for that day.
+                        Existing bookings are not affected.
+                    </p>
+
+                    <form @submit.prevent="submitOverride" class="space-y-4">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <input
+                                v-model="overrideForm.date"
+                                type="date"
+                                :min="today"
+                                required
+                                class="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            />
+
+                            <label class="flex items-center gap-2 text-sm text-gray-700">
+                                <input
+                                    v-model="blockAllDay"
+                                    type="checkbox"
+                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                />
+                                Block entire day
+                            </label>
+
+                            <template v-if="!blockAllDay">
+                                <input
+                                    v-model="overrideForm.start_time"
+                                    type="time"
+                                    class="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                                <span class="text-gray-400">–</span>
+                                <input
+                                    v-model="overrideForm.end_time"
+                                    type="time"
+                                    class="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                            </template>
+
+                            <PrimaryButton :disabled="overrideForm.processing">
+                                Add override
+                            </PrimaryButton>
+                        </div>
+
+                        <InputError :message="overrideForm.errors.date" />
+                        <InputError :message="overrideForm.errors.start_time" />
+                        <InputError :message="overrideForm.errors.end_time" />
+                    </form>
+
+                    <ul v-if="overrides.length" class="mt-6 divide-y divide-gray-100">
+                        <li
+                            v-for="override in overrides"
+                            :key="override.id"
+                            class="flex items-center justify-between py-3"
+                        >
+                            <div class="flex items-center gap-3">
+                                <span class="text-sm font-medium text-gray-700">
+                                    {{ formatOverrideDate(override.date) }}
+                                </span>
+                                <span
+                                    v-if="override.start_time"
+                                    class="text-sm text-gray-500"
+                                >
+                                    {{ override.start_time.substring(0, 5) }} – {{ override.end_time.substring(0, 5) }}
+                                </span>
+                                <span
+                                    v-else
+                                    class="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600"
+                                >
+                                    Unavailable
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                @click="deleteOverride(override)"
+                                class="text-gray-400 hover:text-red-500"
+                                aria-label="Remove override"
+                            >
+                                ✕
+                            </button>
+                        </li>
+                    </ul>
+                    <p v-else class="mt-6 text-sm text-gray-400">
+                        No upcoming overrides.
+                    </p>
                 </div>
             </div>
         </div>

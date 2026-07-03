@@ -62,6 +62,12 @@ class User extends Authenticatable
         return $this->hasMany(AvailabilityWindow::class);
     }
 
+    /** @return HasMany<AvailabilityOverride, $this> */
+    public function availabilityOverrides(): HasMany
+    {
+        return $this->hasMany(AvailabilityOverride::class);
+    }
+
     /** @return HasMany<Booking, $this> */
     public function bookings(): HasMany
     {

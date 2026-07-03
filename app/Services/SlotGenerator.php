@@ -23,10 +23,22 @@ class SlotGenerator
             return [];
         }
 
-        $windows = $host->availabilityWindows()
-            ->where('day_of_week', $dayOfWeek)
+        $overrides = $host->availabilityOverrides()
+            ->whereDate('date', $hostDate->format('Y-m-d'))
             ->orderBy('start_time')
             ->get();
+
+        if ($overrides->contains(fn ($override) => $override->isFullDayBlock())) {
+            return [];
+        }
+
+        // Timed overrides replace the weekly schedule for this date
+        $windows = $overrides->isNotEmpty()
+            ? $overrides
+            : $host->availabilityWindows()
+                ->where('day_of_week', $dayOfWeek)
+                ->orderBy('start_time')
+                ->get();
 
         if ($windows->isEmpty()) {
             return [];

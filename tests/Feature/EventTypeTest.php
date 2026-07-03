@@ -88,6 +88,56 @@ it('store validates required fields', function () {
         ->assertSessionHasErrors(['name', 'duration_minutes']);
 });
 
+it('user can store booking policy fields', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('event-types.store'), [
+            'name' => 'Deep Work',
+            'duration_minutes' => 60,
+            'buffer_before_minutes' => 10,
+            'buffer_after_minutes' => 15,
+            'minimum_notice_minutes' => 120,
+            'booking_window_days' => 14,
+            'max_bookings_per_day' => 3,
+        ])
+        ->assertRedirect(route('event-types.index'));
+
+    $eventType = EventType::where('user_id', $user->id)->sole();
+
+    expect($eventType->buffer_before_minutes)->toBe(10)
+        ->and($eventType->buffer_after_minutes)->toBe(15)
+        ->and($eventType->minimum_notice_minutes)->toBe(120)
+        ->and($eventType->booking_window_days)->toBe(14)
+        ->and($eventType->max_bookings_per_day)->toBe(3);
+});
+
+it('stores max_bookings_per_day as null when submitted as an empty string', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('event-types.store'), [
+            'name' => 'No Limit',
+            'duration_minutes' => 30,
+            'max_bookings_per_day' => '',
+        ])
+        ->assertRedirect(route('event-types.index'));
+
+    expect(EventType::where('user_id', $user->id)->sole()->max_bookings_per_day)->toBeNull();
+});
+
+it('store validates booking policy field ranges', function () {
+    $this->actingAs(User::factory()->create())
+        ->post(route('event-types.store'), [
+            'name' => 'Bad Policy',
+            'duration_minutes' => 30,
+            'buffer_before_minutes' => -1,
+            'booking_window_days' => 0,
+            'max_bookings_per_day' => 0,
+        ])
+        ->assertSessionHasErrors(['buffer_before_minutes', 'booking_window_days', 'max_bookings_per_day']);
+});
+
 it('guest cannot store an event type', function () {
     $this->post(route('event-types.store'), ['name' => 'Test', 'duration_minutes' => 30])
         ->assertRedirect(route('login'));

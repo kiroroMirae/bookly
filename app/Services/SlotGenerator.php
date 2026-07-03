@@ -17,6 +17,12 @@ class SlotGenerator
         $hostDate = CarbonImmutable::parse($date->format('Y-m-d'), $hostTimezone);
         $dayOfWeek = (int) $hostDate->format('w'); // 0=Sunday … 6=Saturday
 
+        $windowEndDate = CarbonImmutable::now($hostTimezone)->startOfDay()->addDays($eventType->booking_window_days);
+
+        if ($hostDate->startOfDay()->gt($windowEndDate)) {
+            return [];
+        }
+
         $windows = $host->availabilityWindows()
             ->where('day_of_week', $dayOfWeek)
             ->orderBy('start_time')
@@ -36,7 +42,24 @@ class SlotGenerator
             ->where('ends_at', '>', $dayStartUtc)
             ->get(['starts_at', 'ends_at']);
 
+        if ($eventType->max_bookings_per_day !== null) {
+            $bookingsOfThisTypeToday = $eventType->bookings()
+                ->whereNot('status', BookingStatus::Cancelled->value)
+                ->when($ignoreBookingId !== null, fn ($query) => $query->whereKeyNot($ignoreBookingId))
+                ->where('starts_at', '<', $dayEndUtc)
+                ->where('ends_at', '>', $dayStartUtc)
+                ->count();
+
+            if ($bookingsOfThisTypeToday >= $eventType->max_bookings_per_day) {
+                return [];
+            }
+        }
+
+        $bufferBefore = $eventType->buffer_before_minutes;
+        $bufferAfter = $eventType->buffer_after_minutes;
+
         $now = CarbonImmutable::now('UTC');
+        $earliestBookable = $now->addMinutes($eventType->minimum_notice_minutes);
         $duration = $eventType->duration_minutes;
         $slots = [];
 
@@ -62,9 +85,10 @@ class SlotGenerator
                 $slotStartUtc = $slotStart->utc();
                 $slotEndUtc = $slotEnd->utc();
 
-                if ($slotStartUtc->gte($now)) {
+                if ($slotStartUtc->gte($earliestBookable)) {
                     $isBooked = $existingBookings->contains(
-                        fn ($b) => $b->starts_at->lt($slotEndUtc) && $b->ends_at->gt($slotStartUtc)
+                        fn ($b) => $b->starts_at->subMinutes($bufferBefore)->lt($slotEndUtc)
+                            && $b->ends_at->addMinutes($bufferAfter)->gt($slotStartUtc)
                     );
 
                     if (! $isBooked) {

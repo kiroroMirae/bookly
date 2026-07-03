@@ -21,12 +21,22 @@ class EventType extends Model
         'duration_minutes',
         'color',
         'is_active',
+        'buffer_before_minutes',
+        'buffer_after_minutes',
+        'minimum_notice_minutes',
+        'booking_window_days',
+        'max_bookings_per_day',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'buffer_before_minutes' => 'integer',
+            'buffer_after_minutes' => 'integer',
+            'minimum_notice_minutes' => 'integer',
+            'booking_window_days' => 'integer',
+            'max_bookings_per_day' => 'integer',
         ];
     }
 

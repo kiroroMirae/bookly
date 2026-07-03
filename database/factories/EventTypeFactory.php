@@ -24,6 +24,11 @@ class EventTypeFactory extends Factory
             'duration_minutes' => fake()->randomElement([15, 30, 45, 60]),
             'color' => fake()->hexColor(),
             'is_active' => true,
+            'buffer_before_minutes' => 0,
+            'buffer_after_minutes' => 0,
+            'minimum_notice_minutes' => 0,
+            'booking_window_days' => 60,
+            'max_bookings_per_day' => null,
         ];
     }
 

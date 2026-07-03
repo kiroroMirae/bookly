@@ -20,6 +20,11 @@ const form = useForm({
     duration_minutes: props.eventType.duration_minutes,
     color: props.eventType.color,
     is_active: props.eventType.is_active,
+    buffer_before_minutes: props.eventType.buffer_before_minutes,
+    buffer_after_minutes: props.eventType.buffer_after_minutes,
+    minimum_notice_minutes: props.eventType.minimum_notice_minutes,
+    booking_window_days: props.eventType.booking_window_days,
+    max_bookings_per_day: props.eventType.max_bookings_per_day ?? '',
 });
 
 const submit = () => {
@@ -99,6 +104,78 @@ const submit = () => {
                             />
                             <InputLabel for="is_active" value="Active" />
                         </div>
+
+                        <fieldset class="space-y-4 border-t border-gray-200 pt-6">
+                            <legend class="mb-2 text-sm font-medium text-gray-700">Booking policy</legend>
+
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                    <InputLabel for="buffer_before_minutes" value="Buffer before (minutes)" />
+                                    <TextInput
+                                        id="buffer_before_minutes"
+                                        v-model="form.buffer_before_minutes"
+                                        type="number"
+                                        min="0"
+                                        max="120"
+                                        class="mt-1 block w-full"
+                                    />
+                                    <InputError :message="form.errors.buffer_before_minutes" class="mt-2" />
+                                </div>
+
+                                <div>
+                                    <InputLabel for="buffer_after_minutes" value="Buffer after (minutes)" />
+                                    <TextInput
+                                        id="buffer_after_minutes"
+                                        v-model="form.buffer_after_minutes"
+                                        type="number"
+                                        min="0"
+                                        max="120"
+                                        class="mt-1 block w-full"
+                                    />
+                                    <InputError :message="form.errors.buffer_after_minutes" class="mt-2" />
+                                </div>
+
+                                <div>
+                                    <InputLabel for="minimum_notice_minutes" value="Minimum notice (minutes)" />
+                                    <TextInput
+                                        id="minimum_notice_minutes"
+                                        v-model="form.minimum_notice_minutes"
+                                        type="number"
+                                        min="0"
+                                        max="10080"
+                                        class="mt-1 block w-full"
+                                    />
+                                    <InputError :message="form.errors.minimum_notice_minutes" class="mt-2" />
+                                </div>
+
+                                <div>
+                                    <InputLabel for="booking_window_days" value="Booking window (days)" />
+                                    <TextInput
+                                        id="booking_window_days"
+                                        v-model="form.booking_window_days"
+                                        type="number"
+                                        min="1"
+                                        max="365"
+                                        class="mt-1 block w-full"
+                                    />
+                                    <InputError :message="form.errors.booking_window_days" class="mt-2" />
+                                </div>
+
+                                <div>
+                                    <InputLabel for="max_bookings_per_day" value="Max bookings per day (optional)" />
+                                    <TextInput
+                                        id="max_bookings_per_day"
+                                        v-model="form.max_bookings_per_day"
+                                        type="number"
+                                        min="1"
+                                        max="100"
+                                        placeholder="No limit"
+                                        class="mt-1 block w-full"
+                                    />
+                                    <InputError :message="form.errors.max_bookings_per_day" class="mt-2" />
+                                </div>
+                            </div>
+                        </fieldset>
 
                         <div class="flex items-center gap-3">
                             <PrimaryButton :disabled="form.processing">

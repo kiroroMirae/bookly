@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Booking;
+use App\Services\IcsGenerator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -38,6 +39,9 @@ class GuestBookingRescheduled extends Notification implements ShouldQueue
             ->line("**{$booking->eventType->name}** with {$booking->host->name}")
             ->line("**New time:** {$startsAt->format('l, F j, Y \a\t g:i A T')}")
             ->line("Duration: {$booking->eventType->duration_minutes} minutes")
-            ->action('Manage booking', $manageUrl);
+            ->action('Manage booking', $manageUrl)
+            ->attachData(($ics = new IcsGenerator)->forBooking($booking), 'invite.ics', [
+                'mime' => $ics->mimeType(),
+            ]);
     }
 }

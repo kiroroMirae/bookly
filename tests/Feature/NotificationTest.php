@@ -9,6 +9,10 @@ use App\Models\EventType;
 use App\Models\User;
 use App\Notifications\GuestBookingCancelled;
 use App\Notifications\GuestBookingConfirmed;
+use App\Notifications\GuestBookingReminder;
+use App\Notifications\GuestBookingRescheduled;
+use App\Notifications\HostBookingCancelledByGuest;
+use App\Notifications\HostBookingRescheduled;
 use App\Notifications\HostNewBooking;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -110,4 +114,49 @@ it('sends GuestBookingCancelled to the guest when the host cancels', function ()
         GuestBookingCancelled::class,
         fn ($notification, $channels, $notifiable) => $notifiable->routes['mail'] === 'bob@example.com'
     );
+});
+
+// ── ics attachments ───────────────────────────────────────────────────────────
+
+function attachmentBooking(): Booking
+{
+    $host = User::factory()->create();
+    $eventType = EventType::factory()->create(['user_id' => $host->id]);
+
+    return Booking::factory()->create([
+        'event_type_id' => $eventType->id,
+        'host_user_id' => $host->id,
+        'ics_sequence' => 1,
+    ]);
+}
+
+it('attaches a calendar invite', function (string $notificationClass, string $method) {
+    $booking = attachmentBooking();
+
+    $mail = (new $notificationClass($booking))->toMail($booking->host);
+
+    expect($mail->rawAttachments)->toHaveCount(1);
+
+    $attachment = $mail->rawAttachments[0];
+
+    expect($attachment['name'])->toBe('invite.ics')
+        ->and($attachment['options']['mime'])->toContain("method={$method}")
+        ->and($attachment['data'])->toContain("METHOD:{$method}")
+        ->and($attachment['data'])->toContain("UID:booking-{$booking->id}@bookly")
+        ->and($attachment['data'])->toContain('SEQUENCE:1')
+        ->and($attachment['data'])->toContain($method === 'CANCEL' ? 'STATUS:CANCELLED' : 'STATUS:CONFIRMED');
+})->with([
+    'guest confirmed' => [GuestBookingConfirmed::class, 'REQUEST'],
+    'host new booking' => [HostNewBooking::class, 'REQUEST'],
+    'guest rescheduled' => [GuestBookingRescheduled::class, 'REQUEST'],
+    'host rescheduled' => [HostBookingRescheduled::class, 'REQUEST'],
+    'guest cancelled' => [GuestBookingCancelled::class, 'CANCEL'],
+    'host cancelled by guest' => [HostBookingCancelledByGuest::class, 'CANCEL'],
+]);
+
+it('does not attach an invite to the reminder email', function () {
+    $booking = attachmentBooking();
+    $mail = (new GuestBookingReminder($booking))->toMail($booking->host);
+
+    expect($mail->rawAttachments)->toBe([]);
 });

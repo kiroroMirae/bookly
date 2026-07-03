@@ -106,6 +106,7 @@ class BookingController extends Controller
                 'starts_at' => $startsAt,
                 'ends_at' => $startsAt->addMinutes($booking->eventType->duration_minutes),
                 'reminder_sent_at' => null,
+                'ics_sequence' => $booking->ics_sequence + 1,
             ]);
         });
 

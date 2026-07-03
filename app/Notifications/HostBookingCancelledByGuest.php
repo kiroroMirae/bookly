@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Booking;
+use App\Services\IcsGenerator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -36,6 +37,11 @@ class HostBookingCancelledByGuest extends Notification implements ShouldQueue
             $mail->line("**Reason:** {$booking->cancellation_reason}");
         }
 
-        return $mail->action('View bookings', route('bookings.index'));
+        $ics = new IcsGenerator;
+
+        return $mail->action('View bookings', route('bookings.index'))
+            ->attachData($ics->forBooking($booking, 'CANCEL'), 'invite.ics', [
+                'mime' => $ics->mimeType('CANCEL'),
+            ]);
     }
 }

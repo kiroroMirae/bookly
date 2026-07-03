@@ -25,6 +25,7 @@ class Booking extends Model
         'cancellation_reason',
         'host_notes',
         'reminder_sent_at',
+        'ics_sequence',
     ];
 
     protected function casts(): array

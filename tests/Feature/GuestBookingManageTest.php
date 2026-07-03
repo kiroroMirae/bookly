@@ -181,7 +181,8 @@ it('guest can reschedule to an open slot', function () {
     expect($booking->starts_at->format('Y-m-d H:i'))->toBe('2025-01-06 10:00')
         ->and($booking->ends_at->format('Y-m-d H:i'))->toBe('2025-01-06 10:30')
         ->and($booking->reminder_sent_at)->toBeNull()
-        ->and($booking->status)->toBe(BookingStatus::Confirmed);
+        ->and($booking->status)->toBe(BookingStatus::Confirmed)
+        ->and($booking->ics_sequence)->toBe(1);
 
     Notification::assertSentTo($host, HostBookingRescheduled::class);
     Notification::assertSentOnDemand(GuestBookingRescheduled::class);
@@ -201,7 +202,8 @@ it('rejects rescheduling to a taken slot', function () {
         'starts_at' => '2025-01-06 10:00:00',
     ])->assertStatus(422);
 
-    expect($booking->refresh()->starts_at->format('H:i'))->toBe('09:00');
+    expect($booking->refresh()->starts_at->format('H:i'))->toBe('09:00')
+        ->and($booking->ics_sequence)->toBe(0);
 });
 
 it('allows rescheduling to a slot adjacent to the current one', function () {

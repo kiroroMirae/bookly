@@ -160,7 +160,8 @@ it('host can reschedule a confirmed booking to an open slot', function () {
 
     $booking->refresh();
     expect($booking->starts_at->format('Y-m-d H:i'))->toBe('2025-01-06 10:00')
-        ->and($booking->reminder_sent_at)->toBeNull();
+        ->and($booking->reminder_sent_at)->toBeNull()
+        ->and($booking->ics_sequence)->toBe(1);
 
     Notification::assertSentOnDemand(GuestBookingRescheduled::class);
 });
@@ -186,7 +187,8 @@ it('rejects host reschedule to a taken slot', function () {
         ->patch(route('bookings.reschedule', $booking), ['starts_at' => '2025-01-06 10:00:00'])
         ->assertStatus(422);
 
-    expect($booking->refresh()->starts_at->format('H:i'))->toBe('09:00');
+    expect($booking->refresh()->starts_at->format('H:i'))->toBe('09:00')
+        ->and($booking->ics_sequence)->toBe(0);
 });
 
 it('another user cannot reschedule someone else\'s booking', function () {

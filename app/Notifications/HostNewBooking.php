@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Booking;
+use App\Services\IcsGenerator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -31,6 +32,9 @@ class HostNewBooking extends Notification implements ShouldQueue
             ->line("**Guest:** {$booking->guest_name} ({$booking->guest_email})")
             ->line("**Event:** {$booking->eventType->name}")
             ->line($startsAt->format('l, F j, Y \a\t g:i A T'))
-            ->action('View bookings', route('bookings.index'));
+            ->action('View bookings', route('bookings.index'))
+            ->attachData(($ics = new IcsGenerator)->forBooking($booking), 'invite.ics', [
+                'mime' => $ics->mimeType(),
+            ]);
     }
 }

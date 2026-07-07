@@ -116,6 +116,13 @@ Then, **only if this completes a phase**:
    - Body: hyphen-bulleted list of concrete deliverables (see `git log -2 --format=%B`
      for the Phase 8/9 exemplars — mention new columns, routes, test counts)
 
+9. Run `/learn-eval` (lesson extraction). Ask: did this phase teach anything a future
+   session wouldn't rediscover from the code alone — a trap, a wrong first assumption,
+   a gate that saved us? If yes, save it project-scoped (a `bookly-*` skill or
+   `.claude/` note); if the same lesson has now appeared in a **second** project,
+   promote it to the global layer per `~/.claude/rules/learning-loop.md`. If nothing
+   was learned, say so and skip — no filler lessons.
+
 There is **no CI** (no `.github/` directory exists as of 2026-07-05), so the local
 pint + test run IS the gate. Nothing else will catch you.
 

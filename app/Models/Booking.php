@@ -10,7 +10,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $event_type_id
+ * @property int $host_user_id
+ * @property string $guest_name
+ * @property string $guest_email
+ * @property string $guest_timezone
+ * @property Carbon $starts_at
+ * @property Carbon $ends_at
+ * @property BookingStatus $status
+ * @property string|null $cancellation_reason
+ * @property string|null $host_notes
+ * @property Carbon|null $reminder_sent_at
+ * @property int $ics_sequence
+ */
 class Booking extends Model
 {
     /** @use HasFactory<BookingFactory> */

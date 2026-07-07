@@ -15,6 +15,7 @@ class HostBookingCancelledByGuest extends Notification implements ShouldQueue
 
     public function __construct(public readonly Booking $booking) {}
 
+    /** @return array<int, string> */
     public function via(object $notifiable): array
     {
         return ['mail'];

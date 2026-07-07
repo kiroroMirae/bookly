@@ -8,6 +8,7 @@ use Carbon\CarbonImmutable;
 
 class SlotGenerator
 {
+    /** @return array<int, array{starts_at: string, display: string}> */
     public function forDate(EventType $eventType, CarbonImmutable $date, string $guestTimezone, ?int $ignoreBookingId = null): array
     {
         $host = $eventType->user;

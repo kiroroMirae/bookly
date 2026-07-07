@@ -3,9 +3,11 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreAvailabilityOverrideRequest extends FormRequest
 {
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [
@@ -15,7 +17,7 @@ class StoreAvailabilityOverrideRequest extends FormRequest
         ];
     }
 
-    public function withValidator($validator): void
+    public function withValidator(Validator $validator): void
     {
         $validator->after(function ($validator) {
             if ($validator->errors()->isNotEmpty()) {

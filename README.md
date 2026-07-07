@@ -28,6 +28,7 @@ Calendly-style appointment scheduling built with Laravel 12, Inertia.js v2, and 
 | 8 | ICS calendar invites on booking emails | Done |
 | 9 | ICS subscribe feed for hosts | Done |
 | 10 | Booking audit trail & cancel validation | Done |
+| 11 | PHPStan level 6 clean (baseline burn-down) | Done |
 | Next | Candidates: TBD | Planned |
 
 ## Stack

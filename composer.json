@@ -54,6 +54,11 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "verify": [
+            "vendor/bin/pint --test",
+            "@php artisan test",
+            "@php -r \"@mkdir('.claude'); file_put_contents('.claude/verify-pass.json', json_encode(['timestamp' => date('c'), 'checks' => ['pint', 'test']]));\""
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

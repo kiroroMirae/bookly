@@ -13,6 +13,7 @@ Calendly-style appointment scheduling built with Laravel 12, Inertia.js v2, and 
 - **Date overrides** — block specific dates or replace weekly hours for a single day (holidays, one-off schedule changes)
 - **Calendar invites** — RFC 5545 `.ics` attachments on confirmation, reschedule, and cancellation emails so bookings land in guests' and hosts' calendars
 - **Calendar feed** — private, tokenized ICS subscribe URL per host (Profile page) so Google/Apple/Outlook calendars stay in sync with bookings automatically
+- **Audit trail** — every booking lifecycle transition (booked, rescheduled, cancelled, completed, no-show) is recorded with actor and detail, shown as a per-booking history timeline on the host's booking list
 
 ## Status
 
@@ -26,7 +27,8 @@ Calendly-style appointment scheduling built with Laravel 12, Inertia.js v2, and 
 | 7 | Date-specific availability overrides | Done |
 | 8 | ICS calendar invites on booking emails | Done |
 | 9 | ICS subscribe feed for hosts | Done |
-| Next | Candidates: cancellation reason & audit trail | Planned |
+| 10 | Booking audit trail & cancel validation | Done |
+| Next | Candidates: TBD | Planned |
 
 ## Stack
 

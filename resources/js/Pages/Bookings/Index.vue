@@ -25,6 +25,32 @@ const saveNotes = (booking) => {
     const notes = notesDrafts.value[booking.id] ?? booking.host_notes ?? '';
     router.patch(route('bookings.update', booking.id), { host_notes: notes }, { preserveScroll: true });
 };
+
+const EVENT_LABELS = {
+    created: 'Booked',
+    rescheduled: 'Rescheduled',
+    cancelled: 'Cancelled',
+    completed: 'Marked completed',
+    no_show: 'Marked no-show',
+};
+
+const describeEvent = (event) => {
+    const label = EVENT_LABELS[event.event] ?? event.event;
+    const actor = event.actor === 'guest' ? 'by guest' : event.actor === 'host' ? 'by you' : '';
+    return actor ? `${label} ${actor}` : label;
+};
+
+const formatTimestamp = (value) => new Date(value).toLocaleString();
+
+const eventDetail = (event) => {
+    if (event.metadata?.reason) {
+        return `Reason: ${event.metadata.reason}`;
+    }
+    if (event.metadata?.from && event.metadata?.to) {
+        return `${formatTimestamp(event.metadata.from)} → ${formatTimestamp(event.metadata.to)}`;
+    }
+    return null;
+};
 </script>
 
 <template>
@@ -82,6 +108,28 @@ const saveNotes = (booking) => {
                                 v-model="notesDrafts[booking.id]"
                                 @save="saveNotes(booking)"
                             />
+
+                            <p
+                                v-if="booking.status === 'cancelled' && booking.cancellation_reason"
+                                class="text-xs text-red-600"
+                            >
+                                Cancellation reason: {{ booking.cancellation_reason }}
+                            </p>
+
+                            <details v-if="booking.events?.length" class="text-xs text-gray-500">
+                                <summary class="cursor-pointer select-none hover:text-gray-700">
+                                    History ({{ booking.events.length }})
+                                </summary>
+                                <ul class="mt-2 space-y-1 border-l border-gray-200 pl-3">
+                                    <li v-for="event in booking.events" :key="event.id">
+                                        <span class="text-gray-700">{{ describeEvent(event) }}</span>
+                                        · {{ formatTimestamp(event.created_at) }}
+                                        <span v-if="eventDetail(event)" class="block text-gray-400">
+                                            {{ eventDetail(event) }}
+                                        </span>
+                                    </li>
+                                </ul>
+                            </details>
                         </li>
                     </ul>
                 </div>
@@ -137,6 +185,28 @@ const saveNotes = (booking) => {
                                 v-model="notesDrafts[booking.id]"
                                 @save="saveNotes(booking)"
                             />
+
+                            <p
+                                v-if="booking.status === 'cancelled' && booking.cancellation_reason"
+                                class="text-xs text-red-600"
+                            >
+                                Cancellation reason: {{ booking.cancellation_reason }}
+                            </p>
+
+                            <details v-if="booking.events?.length" class="text-xs text-gray-500">
+                                <summary class="cursor-pointer select-none hover:text-gray-700">
+                                    History ({{ booking.events.length }})
+                                </summary>
+                                <ul class="mt-2 space-y-1 border-l border-gray-200 pl-3">
+                                    <li v-for="event in booking.events" :key="event.id">
+                                        <span class="text-gray-700">{{ describeEvent(event) }}</span>
+                                        · {{ formatTimestamp(event.created_at) }}
+                                        <span v-if="eventDetail(event)" class="block text-gray-400">
+                                            {{ eventDetail(event) }}
+                                        </span>
+                                    </li>
+                                </ul>
+                            </details>
                         </li>
                     </ul>
                 </div>

@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\BookingActor;
+use App\Enums\BookingEventKind;
 use App\Enums\BookingStatus;
+use App\Http\Requests\CancelBookingRequest;
 use App\Http\Requests\RescheduleBookingRequest;
 use App\Models\Booking;
 use App\Notifications\GuestBookingCancelled;
@@ -58,17 +61,21 @@ class GuestBookingController extends Controller
         ]);
     }
 
-    public function cancel(Request $request, string $username, string $slug, Booking $booking): RedirectResponse
+    public function cancel(CancelBookingRequest $request, string $username, string $slug, Booking $booking): RedirectResponse
     {
         $this->assertBookingMatchesUrl($booking, $username, $slug);
         $this->assertModifiable($booking);
 
         $booking->load('eventType', 'host');
 
+        $reason = $request->validated('cancellation_reason');
+
         $booking->update([
             'status' => BookingStatus::Cancelled,
-            'cancellation_reason' => $request->input('cancellation_reason'),
+            'cancellation_reason' => $reason,
         ]);
+
+        $booking->recordEvent(BookingEventKind::Cancelled, BookingActor::Guest, filled($reason) ? ['reason' => $reason] : null);
 
         $booking->host->notify(new HostBookingCancelledByGuest($booking));
 
@@ -103,11 +110,18 @@ class GuestBookingController extends Controller
                 abort(422, 'That time slot is no longer available.');
             }
 
+            $previousStartsAt = $booking->starts_at->toIso8601String();
+
             $booking->update([
                 'starts_at' => $startsAt,
                 'ends_at' => $startsAt->addMinutes($booking->eventType->duration_minutes),
                 'reminder_sent_at' => null,
                 'ics_sequence' => $booking->ics_sequence + 1,
+            ]);
+
+            $booking->recordEvent(BookingEventKind::Rescheduled, BookingActor::Guest, [
+                'from' => $previousStartsAt,
+                'to' => $startsAt->toIso8601String(),
             ]);
         });
 

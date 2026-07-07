@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\BookingActor;
+use App\Enums\BookingEventKind;
 use App\Enums\BookingStatus;
 use App\Http\Requests\StoreBookingRequest;
 use App\Models\Booking;
@@ -76,7 +78,7 @@ class PublicBookingController extends Controller
                 abort(422, 'That time slot is no longer available.');
             }
 
-            return Booking::create([
+            $booking = Booking::create([
                 'event_type_id' => $eventType->id,
                 'host_user_id' => $host->id,
                 'guest_name' => $data['guest_name'],
@@ -86,6 +88,10 @@ class PublicBookingController extends Controller
                 'ends_at' => $startsAt->addMinutes($eventType->duration_minutes),
                 'status' => BookingStatus::Confirmed,
             ]);
+
+            $booking->recordEvent(BookingEventKind::Created, BookingActor::Guest);
+
+            return $booking;
         });
 
         $booking->load('eventType', 'host');

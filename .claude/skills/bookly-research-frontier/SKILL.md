@@ -179,13 +179,19 @@ before the migration is written, not after.
 
 ### 4. Next product phase after guest self-service (scope check)
 
-**RESOLVED 2026-07-10**: the audit-trail candidate this entry used to point at
-shipped in Phase 10 (commit `3712dcd`, `booking_events` table +
-`BookingActor`/`BookingEventKind` enums + `Booking::recordEvent()` + per-booking
-History timeline). README's status table now reads `Next | Candidates: TBD |
-Planned` — there is currently **no officially sanctioned next candidate**.
-Treat problems #1–#3 and #5 above as the live open-problem list until a human
-picks one (or names something new).
+**RESOLVED 2026-07-10 (again)**: after Phase 10 (audit trail) shipped, this
+entry's "Next" pointer went stale a second time — a human then picked and
+approved **event/booking location** as Phase 12 (commit `49af5e6`): optional
+free-text `location` on `EventType`, snapshotted onto `Booking` at creation,
+surfaced on the public/confirmation pages, host bookings list, 4 notification
+emails, and the booking ICS invite's `LOCATION` property. README's status
+table now has a `| 12 | Event/booking location field | Done |` row and
+`Next | Candidates: TBD | Planned` again. **There is currently no officially
+sanctioned next candidate** — treat problems #1–#3 and #5 above as the live
+open-problem list until a human picks one (or names something new). Given
+this "Next" line has now gone stale twice in a row right after each phase
+ships, whoever picks the next candidate should update this line in the SAME
+session the phase completes, not leave it for a future research pass.
 
 **Shortfall (still live)**: CLAUDE.md's "Do not" list still literally says "Do
 not add guest-booking or availability logic until Phase 3 is scoped" — phases

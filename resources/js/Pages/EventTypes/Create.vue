@@ -10,6 +10,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 const form = useForm({
     name: '',
     description: '',
+    location: '',
     duration_minutes: 30,
     color: '#3B82F6',
     is_active: true,
@@ -61,6 +62,18 @@ const submit = () => {
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             />
                             <InputError :message="form.errors.description" class="mt-2" />
+                        </div>
+
+                        <div>
+                            <InputLabel for="location" value="Location" />
+                            <TextInput
+                                id="location"
+                                v-model="form.location"
+                                type="text"
+                                placeholder="Zoom link sent after booking"
+                                class="mt-1 block w-full"
+                            />
+                            <InputError :message="form.errors.location" class="mt-2" />
                         </div>
 
                         <div>

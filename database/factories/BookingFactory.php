@@ -25,6 +25,7 @@ class BookingFactory extends Factory
             'guest_name' => fake()->name(),
             'guest_email' => fake()->safeEmail(),
             'guest_timezone' => 'Asia/Kuala_Lumpur',
+            'location' => null,
             'starts_at' => $startsAt,
             'ends_at' => $startsAt->copy()->addMinutes($eventType->duration_minutes),
             'status' => BookingStatus::Confirmed,

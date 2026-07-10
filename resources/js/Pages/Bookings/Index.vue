@@ -89,6 +89,9 @@ const eventDetail = (event) => {
                                     <p class="mt-1 text-xs text-gray-500">
                                         {{ booking.event_type?.name }} · {{ booking.starts_at }}
                                     </p>
+                                    <p v-if="booking.location" class="mt-1 text-xs text-gray-500">
+                                        Location: {{ booking.location }}
+                                    </p>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span
@@ -157,6 +160,7 @@ const eventDetail = (event) => {
                                 <div>
                                     <p class="text-sm font-medium text-gray-900">{{ booking.guest_name }}</p>
                                     <p class="text-xs text-gray-500">{{ booking.event_type?.name }} · {{ booking.starts_at }}</p>
+                                    <p v-if="booking.location" class="text-xs text-gray-500">Location: {{ booking.location }}</p>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span

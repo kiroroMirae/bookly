@@ -19,6 +19,7 @@ class StoreEventTypeRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'location' => ['nullable', 'string', 'max:500'],
             'duration_minutes' => ['required', 'integer', 'min:5', 'max:480'],
             'color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'is_active' => ['boolean'],

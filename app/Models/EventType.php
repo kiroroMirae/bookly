@@ -18,6 +18,7 @@ class EventType extends Model
         'name',
         'slug',
         'description',
+        'location',
         'duration_minutes',
         'color',
         'is_active',

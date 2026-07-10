@@ -14,6 +14,7 @@ Calendly-style appointment scheduling built with Laravel 12, Inertia.js v2, and 
 - **Calendar invites** — RFC 5545 `.ics` attachments on confirmation, reschedule, and cancellation emails so bookings land in guests' and hosts' calendars
 - **Calendar feed** — private, tokenized ICS subscribe URL per host (Profile page) so Google/Apple/Outlook calendars stay in sync with bookings automatically
 - **Audit trail** — every booking lifecycle transition (booked, rescheduled, cancelled, completed, no-show) is recorded with actor and detail, shown as a per-booking history timeline on the host's booking list
+- **Location** — optional free-text location per event type (video link, address, phone note), snapshotted onto each booking and shown on the public booking and confirmation pages, the host's booking list, booking emails, and the ICS invite
 
 ## Status
 
@@ -29,6 +30,7 @@ Calendly-style appointment scheduling built with Laravel 12, Inertia.js v2, and 
 | 9 | ICS subscribe feed for hosts | Done |
 | 10 | Booking audit trail & cancel validation | Done |
 | 11 | PHPStan level 6 clean (baseline burn-down) | Done |
+| 12 | Event/booking location field | Done |
 | Next | Candidates: TBD | Planned |
 
 ## Stack

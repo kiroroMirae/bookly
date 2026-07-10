@@ -166,6 +166,46 @@ it('allows booking a slot freed by a cancellation', function () {
     expect(Booking::where('status', BookingStatus::Confirmed->value)->count())->toBe(1);
 })->afterEach(fn () => Carbon::setTestNow());
 
+// ── location snapshot ────────────────────────────────────────────────────────
+
+it('snapshots the event types location onto the booking at creation time', function () {
+    Carbon::setTestNow('2025-01-05 00:00:00');
+    $host = bookingHost();
+    $eventType = bookingEventType($host);
+    $eventType->update(['location' => 'Zoom link sent after booking']);
+    mondayWindow($host);
+
+    $this->post(route('booking.store', ['username' => 'alice', 'slug' => 'coffee-chat']), [
+        'guest_name' => 'Bob Smith',
+        'guest_email' => 'bob@example.com',
+        'guest_timezone' => 'UTC',
+        'starts_at' => '2025-01-06 09:00:00',
+    ])->assertRedirect();
+
+    expect(Booking::sole()->location)->toBe('Zoom link sent after booking');
+})->afterEach(fn () => Carbon::setTestNow());
+
+it('keeps the bookings snapshotted location unchanged after the event type location later changes', function () {
+    Carbon::setTestNow('2025-01-05 00:00:00');
+    $host = bookingHost();
+    $eventType = bookingEventType($host);
+    $eventType->update(['location' => 'Original location']);
+    mondayWindow($host);
+
+    $this->post(route('booking.store', ['username' => 'alice', 'slug' => 'coffee-chat']), [
+        'guest_name' => 'Bob Smith',
+        'guest_email' => 'bob@example.com',
+        'guest_timezone' => 'UTC',
+        'starts_at' => '2025-01-06 09:00:00',
+    ])->assertRedirect();
+
+    $booking = Booking::sole();
+
+    $eventType->update(['location' => 'Changed location']);
+
+    expect($booking->fresh()->location)->toBe('Original location');
+})->afterEach(fn () => Carbon::setTestNow());
+
 it('returns 404 when booking an inactive event type', function () {
     $host = bookingHost();
     EventType::factory()->inactive()->create(['user_id' => $host->id, 'slug' => 'coffee-chat']);

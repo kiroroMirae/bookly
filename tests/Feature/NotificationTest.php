@@ -160,3 +160,36 @@ it('does not attach an invite to the reminder email', function () {
 
     expect($mail->rawAttachments)->toBe([]);
 });
+
+// ── location line ─────────────────────────────────────────────────────────────
+
+it('includes a location line when the booking has a location', function (string $notificationClass) {
+    $booking = attachmentBooking();
+    $booking->update(['location' => 'Zoom link sent after booking']);
+
+    $mail = (new $notificationClass($booking->fresh()))->toMail($booking->host);
+
+    expect(collect($mail->introLines)->contains(
+        fn ($line) => str_contains($line, 'Location: Zoom link sent after booking')
+    ))->toBeTrue();
+})->with([
+    'guest confirmed' => [GuestBookingConfirmed::class],
+    'guest reminder' => [GuestBookingReminder::class],
+    'host new booking' => [HostNewBooking::class],
+    'guest rescheduled' => [GuestBookingRescheduled::class],
+]);
+
+it('omits the location line when the booking has no location', function (string $notificationClass) {
+    $booking = attachmentBooking();
+
+    $mail = (new $notificationClass($booking))->toMail($booking->host);
+
+    expect(collect($mail->introLines)->contains(
+        fn ($line) => str_contains($line, 'Location:')
+    ))->toBeFalse();
+})->with([
+    'guest confirmed' => [GuestBookingConfirmed::class],
+    'guest reminder' => [GuestBookingReminder::class],
+    'host new booking' => [HostNewBooking::class],
+    'guest rescheduled' => [GuestBookingRescheduled::class],
+]);

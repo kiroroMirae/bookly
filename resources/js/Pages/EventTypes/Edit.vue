@@ -17,6 +17,7 @@ const props = defineProps({
 const form = useForm({
     name: props.eventType.name,
     description: props.eventType.description ?? '',
+    location: props.eventType.location ?? '',
     duration_minutes: props.eventType.duration_minutes,
     color: props.eventType.color,
     is_active: props.eventType.is_active,
@@ -68,6 +69,18 @@ const submit = () => {
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             />
                             <InputError :message="form.errors.description" class="mt-2" />
+                        </div>
+
+                        <div>
+                            <InputLabel for="location" value="Location" />
+                            <TextInput
+                                id="location"
+                                v-model="form.location"
+                                type="text"
+                                placeholder="Zoom link sent after booking"
+                                class="mt-1 block w-full"
+                            />
+                            <InputError :message="form.errors.location" class="mt-2" />
                         </div>
 
                         <div>

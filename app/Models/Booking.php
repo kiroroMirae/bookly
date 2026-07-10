@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property string $guest_name
  * @property string $guest_email
  * @property string $guest_timezone
+ * @property string|null $location
  * @property Carbon $starts_at
  * @property Carbon $ends_at
  * @property BookingStatus $status
@@ -38,6 +39,7 @@ class Booking extends Model
         'guest_name',
         'guest_email',
         'guest_timezone',
+        'location',
         'starts_at',
         'ends_at',
         'status',

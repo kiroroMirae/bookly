@@ -29,6 +29,7 @@ defineProps({
                     <p class="font-medium text-gray-800">{{ eventType.name }}</p>
                     <p class="text-gray-500">with {{ host.name }}</p>
                     <p class="mt-2 text-gray-700">{{ booking.starts_at }}</p>
+                    <p v-if="booking.location" class="mt-2 text-gray-500">Location: {{ booking.location }}</p>
                 </div>
             </div>
         </div>

@@ -75,6 +75,7 @@ const today = new Date().toISOString().split('T')[0];
                     </div>
                 </div>
                 <p v-if="eventType.description" class="mt-3 text-sm text-gray-600">{{ eventType.description }}</p>
+                <p v-if="eventType.location" class="mt-1 text-sm text-gray-600">Location: {{ eventType.location }}</p>
             </div>
 
             <div class="mb-6 rounded-lg bg-white p-6 shadow-sm">

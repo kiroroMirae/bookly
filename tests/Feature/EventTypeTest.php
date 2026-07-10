@@ -145,6 +145,60 @@ it('guest cannot store an event type', function () {
         ->assertRedirect(route('login'));
 });
 
+// ── location ──────────────────────────────────────────────────────────────────
+
+it('user can store an event type with a location', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('event-types.store'), [
+            'name' => 'Coffee Chat',
+            'duration_minutes' => 30,
+            'location' => 'Zoom link sent after booking',
+        ])
+        ->assertRedirect(route('event-types.index'));
+
+    expect(EventType::where('user_id', $user->id)->sole()->location)->toBe('Zoom link sent after booking');
+});
+
+it('location is left null when omitted from the store request', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('event-types.store'), [
+            'name' => 'Coffee Chat',
+            'duration_minutes' => 30,
+        ])
+        ->assertRedirect(route('event-types.index'));
+
+    expect(EventType::where('user_id', $user->id)->sole()->location)->toBeNull();
+});
+
+it('store validates location does not exceed 500 characters', function () {
+    $this->actingAs(User::factory()->create())
+        ->post(route('event-types.store'), [
+            'name' => 'Coffee Chat',
+            'duration_minutes' => 30,
+            'location' => str_repeat('a', 501),
+        ])
+        ->assertSessionHasErrors('location');
+});
+
+it('user can update an event types location', function () {
+    $user = User::factory()->create();
+    $eventType = EventType::factory()->create(['user_id' => $user->id, 'location' => 'Old location']);
+
+    $this->actingAs($user)
+        ->patch(route('event-types.update', $eventType), [
+            'name' => $eventType->name,
+            'duration_minutes' => $eventType->duration_minutes,
+            'location' => 'New location',
+        ])
+        ->assertRedirect(route('event-types.index'));
+
+    expect($eventType->fresh()->location)->toBe('New location');
+});
+
 // ── edit ──────────────────────────────────────────────────────────────────────
 
 it('user can view edit form for their own event type', function () {

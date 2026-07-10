@@ -44,6 +44,10 @@ class IcsGenerator
             $lines[] = 'DESCRIPTION:'.$this->escape($eventType->description);
         }
 
+        if (filled($booking->location)) {
+            $lines[] = 'LOCATION:'.$this->escape($booking->location);
+        }
+
         $lines[] = 'ORGANIZER;CN='.$this->escape($host->name).':mailto:'.$host->email;
         $lines[] = 'ATTENDEE;CN='.$this->escape($booking->guest_name)
             .';ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED:mailto:'.$booking->guest_email;

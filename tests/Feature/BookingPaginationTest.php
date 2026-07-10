@@ -165,6 +165,36 @@ it('returns an empty past page when the host has no past bookings', function () 
         );
 });
 
+// ── location ──────────────────────────────────────────────────────────────────
+
+it('exposes location on upcoming and past booking items', function () {
+    $host = User::factory()->create();
+    $eventType = EventType::factory()->create(['user_id' => $host->id]);
+
+    Booking::factory()->create([
+        'host_user_id' => $host->id,
+        'event_type_id' => $eventType->id,
+        'starts_at' => now()->addDay(),
+        'ends_at' => now()->addDay()->addMinutes(30),
+        'status' => BookingStatus::Confirmed,
+        'location' => 'Zoom link sent after booking',
+    ]);
+
+    Booking::factory()->past()->create([
+        'host_user_id' => $host->id,
+        'event_type_id' => $eventType->id,
+        'status' => BookingStatus::Confirmed,
+        'location' => '123 Main St, Suite 4',
+    ]);
+
+    $this->actingAs($host)
+        ->get(route('bookings.index'))
+        ->assertInertia(fn ($page) => $page->component('Bookings/Index')
+            ->where('upcoming.0.location', 'Zoom link sent after booking')
+            ->where('past.data.0.location', '123 Main St, Suite 4')
+        );
+});
+
 // ── phase-10 non-regression ──────────────────────────────────────────────────
 
 it('exposes audit events and cancellation reason for a cancelled booking on the paginated past list', function () {

@@ -143,6 +143,20 @@ it('omits DESCRIPTION when the event type has none', function () {
     expect($ics)->not->toContain('DESCRIPTION');
 });
 
+it('includes an escaped LOCATION when the booking has one', function () {
+    $booking = makeIcsBooking([], ['location' => "Room 5; Building A, North\nWing"]);
+
+    $unfolded = str_replace("\r\n ", '', (new IcsGenerator)->forBooking($booking));
+
+    expect($unfolded)->toContain('LOCATION:Room 5\\; Building A\\, North\\nWing');
+});
+
+it('omits LOCATION when the booking has none', function () {
+    $ics = (new IcsGenerator)->forBooking(makeIcsBooking([], ['location' => null]));
+
+    expect($ics)->not->toContain('LOCATION');
+});
+
 it('folds long lines at 75 octets without splitting multibyte characters', function () {
     $description = str_repeat('éé ordé ', 30); // multibyte, > 75 octets
 

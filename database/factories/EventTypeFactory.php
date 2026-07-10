@@ -21,6 +21,7 @@ class EventTypeFactory extends Factory
             'name' => $name,
             'slug' => Str::slug($name),
             'description' => fake()->optional()->sentence(),
+            'location' => null,
             'duration_minutes' => fake()->randomElement([15, 30, 45, 60]),
             'color' => fake()->hexColor(),
             'is_active' => true,

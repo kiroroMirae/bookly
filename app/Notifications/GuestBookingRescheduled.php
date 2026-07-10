@@ -40,6 +40,7 @@ class GuestBookingRescheduled extends Notification implements ShouldQueue
             ->line("**{$booking->eventType->name}** with {$booking->host->name}")
             ->line("**New time:** {$startsAt->format('l, F j, Y \a\t g:i A T')}")
             ->line("Duration: {$booking->eventType->duration_minutes} minutes")
+            ->when(filled($booking->location), fn ($m) => $m->line("Location: {$booking->location}"))
             ->action('Manage booking', $manageUrl)
             ->attachData(($ics = new IcsGenerator)->forBooking($booking), 'invite.ics', [
                 'mime' => $ics->mimeType(),

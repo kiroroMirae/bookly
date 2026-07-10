@@ -33,6 +33,7 @@ class HostNewBooking extends Notification implements ShouldQueue
             ->line("**Guest:** {$booking->guest_name} ({$booking->guest_email})")
             ->line("**Event:** {$booking->eventType->name}")
             ->line($startsAt->format('l, F j, Y \a\t g:i A T'))
+            ->when(filled($booking->location), fn ($m) => $m->line("Location: {$booking->location}"))
             ->action('View bookings', route('bookings.index'))
             ->attachData(($ics = new IcsGenerator)->forBooking($booking), 'invite.ics', [
                 'mime' => $ics->mimeType(),

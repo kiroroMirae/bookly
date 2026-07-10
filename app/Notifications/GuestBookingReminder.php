@@ -27,6 +27,7 @@ class GuestBookingReminder extends Notification
             ->line('This is a reminder about your upcoming booking.')
             ->line("**{$booking->eventType->name}** with {$booking->host->name}")
             ->line($startsAt->format('l, F j, Y \a\t g:i A T'))
-            ->line("Duration: {$booking->eventType->duration_minutes} minutes");
+            ->line("Duration: {$booking->eventType->duration_minutes} minutes")
+            ->when(filled($booking->location), fn ($m) => $m->line("Location: {$booking->location}"));
     }
 }

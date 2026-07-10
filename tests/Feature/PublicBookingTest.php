@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\AvailabilityWindow;
+use App\Models\Booking;
 use App\Models\EventType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -101,5 +102,36 @@ it('passes the event type details to the page', function () {
         ->assertInertia(fn ($page) => $page
             ->where('eventType.name', 'Coffee Chat')
             ->where('eventType.duration_minutes', 30)
+        );
+});
+
+// ── location ──────────────────────────────────────────────────────────────────
+
+it('exposes the event types location on the show page', function () {
+    $host = User::factory()->create(['username' => 'alice', 'timezone' => 'UTC']);
+    EventType::factory()->create([
+        'user_id' => $host->id,
+        'slug' => 'coffee-chat',
+        'is_active' => true,
+        'location' => 'Zoom link sent after booking',
+    ]);
+
+    $this->get(route('booking.show', ['username' => 'alice', 'slug' => 'coffee-chat']))
+        ->assertInertia(fn ($page) => $page->where('eventType.location', 'Zoom link sent after booking'));
+});
+
+it('exposes the bookings location on the confirmation page', function () {
+    $host = User::factory()->create(['username' => 'alice']);
+    $eventType = EventType::factory()->create(['user_id' => $host->id, 'slug' => 'coffee-chat', 'is_active' => true]);
+    $booking = Booking::factory()->create([
+        'event_type_id' => $eventType->id,
+        'host_user_id' => $host->id,
+        'location' => '123 Main St, Suite 4',
+    ]);
+
+    $this->get(route('booking.confirmation', ['username' => 'alice', 'slug' => 'coffee-chat', 'booking' => $booking->id]))
+        ->assertInertia(fn ($page) => $page
+            ->component('Public/Booking/Confirmation')
+            ->where('booking.location', '123 Main St, Suite 4')
         );
 });

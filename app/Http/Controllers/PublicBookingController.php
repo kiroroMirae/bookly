@@ -42,7 +42,7 @@ class PublicBookingController extends Controller
         $slots = (new SlotGenerator)->forDate($eventType, $date, $guestTimezone);
 
         return Inertia::render('Public/Booking/Show', [
-            'eventType' => $eventType->only('id', 'name', 'slug', 'description', 'duration_minutes', 'color'),
+            'eventType' => $eventType->only('id', 'name', 'slug', 'description', 'location', 'duration_minutes', 'color'),
             'host' => $eventType->user->only('name', 'username'),
             'slots' => $slots,
             'selectedDate' => $date->format('Y-m-d'),
@@ -84,6 +84,7 @@ class PublicBookingController extends Controller
                 'guest_name' => $data['guest_name'],
                 'guest_email' => $data['guest_email'],
                 'guest_timezone' => $guestTimezone,
+                'location' => $eventType->location,
                 'starts_at' => $startsAt,
                 'ends_at' => $startsAt->addMinutes($eventType->duration_minutes),
                 'status' => BookingStatus::Confirmed,
@@ -117,7 +118,7 @@ class PublicBookingController extends Controller
         );
 
         return Inertia::render('Public/Booking/Confirmation', [
-            'booking' => $booking->only('guest_name', 'guest_email', 'starts_at', 'ends_at', 'guest_timezone'),
+            'booking' => $booking->only('guest_name', 'guest_email', 'starts_at', 'ends_at', 'guest_timezone', 'location'),
             'eventType' => $booking->eventType->only('name', 'duration_minutes', 'color'),
             'host' => $booking->host->only('name'),
         ]);

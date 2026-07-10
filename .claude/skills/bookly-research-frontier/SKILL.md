@@ -12,8 +12,8 @@ description: >
 
 # Bookly Research Frontier
 
-Verified against the working tree on 2026-07-06 (commit `086f30b`, 192 passing
-Pest tests). This skill is a forward-looking backlog: for each open problem it
+Verified against the working tree on 2026-07-10 (commit `a7d0ed3`, 205 passing
+Pest tests, PHPStan level 6 clean). This skill is a forward-looking backlog: for each open problem it
 gives the shortfall, the Bookly-specific asset that makes it tractable, first
 concrete steps, and a falsifiable milestone. It ends with the general
 hypothesis → spike → adopt-or-retire methodology this project should use for
@@ -165,45 +165,32 @@ migration is written, not after.
 
 ### 4. Next product phase after guest self-service (scope check)
 
-**Shortfall**: CLAUDE.md's "Do not" list still literally says "Do not add
-guest-booking or availability logic until Phase 3 is scoped" and "Do not
-introduce teams or multi-tenant models — v1 is single-user-per-account"
-(`CLAUDE.md` "Do not" section) — but phases 3 through 9 are shipped
-(guest self-service, policies, overrides, ICS invites and feed are all
-"Done" per `README.md`'s status table). The guest-booking fence is stale
-prose (already flagged as weak point #7 in the architecture contract); the
-teams/multi-tenancy fence is still a live, deliberate constraint, not a bug.
+**RESOLVED 2026-07-10**: the audit-trail candidate this entry used to point at
+shipped in Phase 10 (commit `3712dcd`, `booking_events` table +
+`BookingActor`/`BookingEventKind` enums + `Booking::recordEvent()` + per-booking
+History timeline). README's status table now reads `Next | Candidates: TBD |
+Planned` — there is currently **no officially sanctioned next candidate**.
+Treat problems #1–#3 and #5 above as the live open-problem list until a human
+picks one (or names something new).
 
-**Asset**: `README.md`'s own status table names the only officially
-sanctioned next candidate — do not invent scope beyond what's written there:
-
-> | Next | Candidates: cancellation reason & audit trail | Planned |
-
-That's the one item with any documented forward intent. Everything else
-(teams, guest accounts, multi-tenancy) is explicitly fenced by CLAUDE.md's
-"Do not" list and should not be treated as a research candidate without a
-human first agreeing to lift that fence.
+**Shortfall (still live)**: CLAUDE.md's "Do not" list still literally says "Do
+not add guest-booking or availability logic until Phase 3 is scoped" — phases
+3 through 11 are shipped, so this is stale prose (weak point #7 in the
+architecture contract). The teams/multi-tenancy fence ("v1 is
+single-user-per-account") is still a live, deliberate constraint, not a bug —
+do not treat it as a research candidate without a human explicitly lifting it.
 
 **First steps**:
-1. Flag the CLAUDE.md staleness (Phase 3 language) to a human as a `docs:`
+1. Flag the CLAUDE.md Phase-3 staleness to a human as a standalone `docs:`
    fix — separate from any new feature work, since editing CLAUDE.md is
    itself a gated change (`bookly-change-control` §4).
-2. If picking up "cancellation reason & audit trail": check what already
-   exists — `Booking` already has a `cancellation_reason` field referenced in
-   flow B of the architecture contract ("both may attach
-   `cancellation_reason`" — `GuestBookingController::cancel`,
-   `BookingController::cancel`). Verify in the schema/model before assuming
-   this is greenfield; the "audit trail" half (who changed what, when) is
-   likely the actual net-new part.
-3. Scope the audit trail question narrowly: a status-change log table, or
-   reuse of Laravel's built-in model event hooks — resolve with a human
-   before creating a migration, since any new table is a schema change.
+2. When a human names the next candidate, replace this entry's shortfall/asset
+   with the new one rather than appending — keep one entry per open problem.
 
-**Milestone**: a written one-paragraph scope statement for "cancellation
-reason & audit trail" that a human has signed off on, before any migration or
-controller code is written. Do not treat "teams" or "guest accounts" as
-research candidates — those are out-of-scope fences, not open questions,
-until a human explicitly lifts them.
+**Milestone**: CLAUDE.md's "Do not" Phase-3 line is corrected, and this entry
+names a real next candidate instead of "TBD." Do not treat "teams" or "guest
+accounts" as research candidates — those are out-of-scope fences, not open
+questions, until a human explicitly lifts them.
 
 ### 5. Reminder scheduler gap outside dev (weak points #1, #2; ops notes)
 

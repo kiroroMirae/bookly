@@ -122,6 +122,89 @@ Scheduler / cron entry. Practical consequences:
 - README line 64 says "scheduled daily" — true at the code level, misleading
   operationally. Report divergence via `bookly-change-control`; do not silently fix.
 
+## 3a. Production process supervision (hosting target: undecided as of 2026-07-10)
+
+Section 3 covers the **dev-mode** gap (nothing runs `schedule:work` under
+`composer run dev`). This section covers the **production** version of the
+same problem, plus its sibling — the queue worker (§1: `QUEUE_CONNECTION=database`,
+6 of 7 notifications `ShouldQueue`; no worker running means booking/cancel/
+reschedule emails sit in the `jobs` table forever, silently).
+
+No hosting target has been chosen yet (verified with a human 2026-07-10), so
+this documents the two most common shapes generically. **Specialize this
+section once a target is picked** — a managed Laravel platform (Forge, Vapor,
+Railway, etc.) usually has first-class scheduler/queue config that replaces
+the raw cron/systemd below entirely; don't hand-roll cron on a platform that
+already solves this.
+
+### Shape A — VPS / shared hosting (cron + Supervisor)
+
+Two independent things must run, forever, surviving reboots:
+
+1. **Scheduler tick** — a crontab entry invoking `schedule:run` every minute
+   (NOT `schedule:work` here — cron already provides the "every minute" loop,
+   so `schedule:run` is the one-shot dispatcher Laravel's own docs prescribe
+   for cron-based hosting):
+   ```
+   * * * * * cd /path/to/bookly && php artisan schedule:run >> /dev/null 2>&1
+   ```
+2. **Queue worker** — `queue:work` (NOT `queue:listen`, which is the dev-only
+   command `composer run dev` uses — `queue:listen` reboots the app on every
+   job, which is fine for local iteration but heavier in production;
+   `queue:work` keeps the app booted and is the documented production choice),
+   supervised by Supervisor so it restarts on crash and on boot:
+   ```ini
+   [program:bookly-queue-worker]
+   process_name=%(program_name)s_%(process_num)02d
+   command=php /path/to/bookly/artisan queue:work --sleep=3 --tries=3 --max-time=3600
+   autostart=true
+   autorestart=true
+   numprocs=1
+   redirect_stderr=true
+   stdout_logfile=/path/to/bookly/storage/logs/queue-worker.log
+   ```
+   After every deploy, run `php artisan queue:restart` — `queue:work` caches
+   the booted app in memory, so a deploy without this restart keeps serving
+   jobs against the *old* code until the worker process is killed and
+   Supervisor relaunches it.
+
+### Shape B — Containerized (Docker)
+
+Same two responsibilities, no cron/Supervisor available inside a minimal
+container — instead run them as separate long-running processes, one per
+container/service, supervised by the orchestrator (Compose `restart: unless-stopped`,
+Kubernetes Deployment, ECS task, etc.) rather than a host-level cron:
+
+- A `scheduler` service running `php artisan schedule:work` directly (this
+  command IS meant to be the long-running loop in this shape, unlike Shape A —
+  there's no external "every minute" tick to piggyback on).
+- A `queue-worker` service running `php artisan queue:work --sleep=3 --tries=3`.
+- Both need the same `.env`/DB connectivity as the `app` service. On redeploy,
+  the orchestrator's normal container-replace behavior handles the
+  `queue:restart` concern for you (old container dies, new one boots fresh) —
+  don't add a manual `queue:restart` step in this shape, it's redundant.
+
+### Verification (don't assume — kill and restart)
+
+The milestone isn't "the config file looks right", it's: kill the queue
+worker process, confirm a booking action's email sits unsent in `jobs`, then
+let Supervisor/the orchestrator restart it, and confirm the job drains
+automatically. Same for the scheduler: temporarily set a booking to be
+23–25h out, kill/restart the scheduler process, confirm
+`bookings:send-reminders` still fires on its next tick without manual
+intervention. `SendBookingReminders` is already idempotent (§3,
+`lockForUpdate` + `reminder_sent_at` re-check), so an over-eager restart or a
+double-tick is safe by design — that part doesn't need re-verifying here.
+
+### Related but distinct gap: `MAIL_MAILER`
+
+`.env.example` and dev both use `MAIL_MAILER=log` — emails are written to
+`laravel.log`, never sent (§5). Fixing process supervision alone does **not**
+make production emails work; a real mail driver (`smtp`, `ses`, `postmark`,
+etc.) must also be configured in the production `.env`. This is a separate
+`.env` concern, not a process-supervision one — flagging it here so "I set up
+cron and Supervisor" isn't mistaken for "emails now work in production."
+
 ## 4. Notifications map (all in `app/Notifications/`, all mail-channel)
 
 | Event | Notification | Recipient | Queued? | ICS attached? |
@@ -170,6 +253,14 @@ So there is NO working public booking page out of the box. Fastest path to one:
 
 ## Provenance and maintenance
 
+- §3a (production process supervision) added 2026-07-10 per `bookly-research-frontier`
+  problem #5. Hosting target was undecided at write time — the section documents
+  both a VPS/cron/Supervisor shape and a containerized shape generically, and
+  explicitly needs specializing once a real target is picked. The "kill and
+  restart" verification in §3a is a documented procedure, not something that
+  has actually been run against a live deployment yet (no deployment exists) —
+  don't treat this section as "verified in production", only as "the correct
+  procedure once one exists."
 - Written 2026-07-05 by inspecting `C:\xampp\htdocs\bookly` directly: `composer.json`,
   `routes/web.php`, `routes/console.php`, `bootstrap/app.php`,
   `app/Console/Commands/SendBookingReminders.php`, all 7 files in `app/Notifications/`,

@@ -206,7 +206,21 @@ names a real next candidate instead of "TBD." Do not treat "teams" or "guest
 accounts" as research candidates — those are out-of-scope fences, not open
 questions, until a human explicitly lifts them.
 
-### 5. Reminder scheduler gap outside dev (weak points #1, #2; ops notes)
+### 5. Reminder scheduler gap outside dev (weak points #1, #2; ops notes) — RUNBOOK WRITTEN 2026-07-10, LIVE VERIFICATION PENDING
+
+**Partially resolved**: asked the human for the hosting target — undecided as
+of 2026-07-10. Per this entry's own step 3, wrote `bookly-run-and-operate` §3a
+as a deployment runbook covering both a VPS/cron/Supervisor shape and a
+containerized shape generically, bundling the scheduler and queue-worker gaps
+into one "process supervision" answer as this entry's step 2 recommended, and
+flagged `MAIL_MAILER=log` as a related-but-distinct gap that process
+supervision alone doesn't fix. **This entry's milestone is NOT fully met**:
+the runbook documents the correct command sequence, but the "kill and restart,
+confirm resume" verification has not been run against a live deployment,
+because no deployment exists yet. Re-open this entry (or just do the
+verification) once a hosting target is picked and a real environment exists —
+at that point also specialize §3a for the actual target rather than leaving
+it generic, per that section's own note.
 
 **Shortfall**: `bootstrap/app.php:25-27` schedules `bookings:send-reminders`
 `->daily()`, but Laravel's scheduler is inert without something invoking

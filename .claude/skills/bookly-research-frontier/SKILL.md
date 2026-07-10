@@ -43,13 +43,20 @@ Each entry: **shortfall** (why current state falls short) → **asset** (what
 Bookly already has that makes this tractable) → **first steps** → **milestone**
 (how you'll know the spike succeeded or should be retired).
 
-### 1. No CI (`bookly-architecture-contract` weak point #5)
+### 1. No CI (`bookly-architecture-contract` weak point #5) — SHIPPED 2026-07-10
 
-**Shortfall**: `.github/` does not exist (verified `ls .github` → not found).
-Pint and `php artisan test` run only by human convention before commit; nothing
-blocks a broken commit from landing on `main`, and there are no branches/PRs to
-gate in the first place (`git log --oneline` shows 10 commits, all direct to
-`main`).
+**Resolved**: `.github/workflows/tests.yml` runs composer install, npm build,
+`pint --test`, `phpstan analyse`, and the full Pest suite on every push/PR to
+`main`. Landed via PR #1 (commit `9b5930c`), validated green end-to-end on the
+PR before merge, per the milestone below. No branch protection rule requiring
+the check has been added yet — that's a separate, smaller follow-up if
+wanted, not part of this entry's original scope.
+
+**Shortfall (historical)**: `.github/` does not exist (verified `ls .github` →
+not found). Pint and `php artisan test` run only by human convention before
+commit; nothing blocks a broken commit from landing on `main`, and there are
+no branches/PRs to gate in the first place (`git log --oneline` shows 10
+commits, all direct to `main`).
 
 **Asset**: 192 passing Pest tests (`php artisan test --compact` → `192 passed
 (787 assertions)`, 8.56s) give a CI job something real to run and a fast

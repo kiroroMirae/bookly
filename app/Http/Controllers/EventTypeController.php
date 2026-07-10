@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\BookingStatus;
 use App\Http\Requests\StoreEventTypeRequest;
 use App\Http\Requests\UpdateEventTypeRequest;
 use App\Models\EventType;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -63,7 +65,17 @@ class EventTypeController extends Controller
     {
         Gate::authorize('delete', $eventType);
 
-        $eventType->delete();
+        DB::transaction(function () use ($eventType) {
+            $hasActiveBooking = $eventType->bookings()
+                ->lockForUpdate()
+                ->where('status', BookingStatus::Confirmed)
+                ->where('starts_at', '>=', now())
+                ->exists();
+
+            abort_unless(! $hasActiveBooking, 422, 'This event type has upcoming confirmed bookings and cannot be deleted.');
+
+            $eventType->delete();
+        });
 
         return redirect()->route('event-types.index');
     }

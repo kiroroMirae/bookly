@@ -141,45 +141,41 @@ or a manual timed comparison, not by assumption. Retire the spike if cursor
 pagination alone (no deferred props) gets there — don't add UI complexity the
 data volume doesn't yet justify (YAGNI).
 
-### 3. No soft deletes / cascade-delete of bookings (weak point #8)
+### 3. No soft deletes / cascade-delete of bookings (weak point #8) — SHIPPED 2026-07-10
 
-**Shortfall**: `event_type_id` and `host_user_id` on `bookings` are
-`cascadeOnDelete()` with no `softDeletes()` column
+**Resolved**: option (a) was chosen after a `planner` comparison of (a) prevent
+deletion / (b) soft-delete / (c) both — no schema change needed. `EventTypeController::destroy`
+now guards on "active" bookings (`status === Confirmed AND starts_at >= now()`,
+the same boundary `BookingController::index` uses for "upcoming"), wrapped in
+`DB::transaction()` + `lockForUpdate()` to close a TOCTOU race a code review
+caught. Scoped narrowly: any booking that is `Cancelled`, `Completed`, `NoShow`,
+or `Confirmed`-but-past no longer blocks deletion. Account deletion
+(`ProfileController::destroy`) was explicitly left untouched — a deliberate
+scope decision, not an oversight; it still cascade-deletes a host's bookings.
+Tests: `tests/Feature/EventTypeTest.php` extended, 213 passed, pint + phpstan
+clean. **Options (b) and (c) remain open** if stronger history-preservation
+than "block deletion" is wanted later — see the planning research below for
+why (b) as originally scoped doesn't actually work (`SoftDeletes` on `Booking`
+alone doesn't survive a DB-level `ON DELETE CASCADE` from a hard-deleted
+parent `EventType`/`User`).
+
+**Shortfall (historical)**: `event_type_id` and `host_user_id` on `bookings`
+are `cascadeOnDelete()` with no `softDeletes()` column
 (`database/migrations/2026_06_29_063548_create_bookings_table.php`); deleting
-an event type (`EventTypeController::destroy` — `app/Http/Controllers/EventTypeController.php:62-69`)
-hard-deletes every booking ever made against it, with no confirmation of
-booking count and no archive. This is a real data-loss / audit-trail gap, not
-a cosmetic one — a host who deletes an event type by accident loses booking
-history permanently.
+an event type hard-deleted every booking ever made against it, with no
+confirmation of booking count and no archive. A second, broader path existed
+too: `ProfileController::destroy` (account deletion) cascade-deletes via
+`host_user_id` — not just event-type deletion, as this entry originally
+implied.
 
-**Asset**: the existing migration discipline (never edit a committed
-migration; always add a new one — CLAUDE.md, enforced in
-`bookly-change-control` §1) means the fix shape is already well-understood:
-an additive migration, not a rewrite. The `BookingPolicy`/`EventTypePolicy`
-pattern also gives a ready place to add an "are there active bookings"
-pre-check before allowing deletion, without touching the authorization model.
-
-**First steps**:
-1. Write the research question precisely before writing code: is the goal
-   (a) prevent deletion of event types with bookings, (b) soft-delete
-   bookings so history survives event-type/user deletion, or (c) both? These
-   have different migration and UX shapes — resolve this with the human
-   before scaffolding, since it's a product decision, not just a technical one.
-2. Prototype a `SoftDeletes` migration on `bookings` in isolation (add
-   `deleted_at`, adjust the model's `casts()`/traits) and check what breaks:
-   the reminder command's query (`SendBookingReminders.php`), the calendar
-   feed's status whitelist (`CalendarFeedController.php`), and any `->get()`
-   call that assumes no global scope — soft deletes add a global scope that
-   changes result sets everywhere the model is queried.
-3. Decide a retention policy question explicitly (forever? N days?) — don't
-   let "add soft deletes" silently become "keep everything forever" without
-   that being a stated decision.
-
-**Milestone**: a feature test proves an event type with confirmed bookings
-either can't be deleted, or its bookings survive deletion and remain queryable
-— pick one and make it pass. **This is a schema change to `bookings`**, so
-per `bookly-change-control` §5 it needs explicit human approval before the
-migration is written, not after.
+**If picking up (b) or (c) later**: read the corrected analysis above first —
+(b) requires either changing `event_type_id`/`host_user_id` to `nullOnDelete()`
+plus snapshotting event-type display fields onto the booking, or soft-deleting
+`EventType`/`User` too (which collides with slug-uniqueness semantics, the
+project's most fenced area). Either shape is a schema change requiring human
+approval per `bookly-change-control` §5, and (b)/(c) both raise a retention-policy
+question (forever vs. pruned after N days) that must be answered in writing
+before the migration is written, not after.
 
 ### 4. Next product phase after guest self-service (scope check)
 

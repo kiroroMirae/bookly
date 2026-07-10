@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Enums\BookingStatus;
+use App\Models\Booking;
 use App\Models\EventType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -216,4 +218,46 @@ it('user is forbidden from deleting another users event type', function () {
     $this->actingAs(User::factory()->create())
         ->delete(route('event-types.destroy', $eventType))
         ->assertForbidden();
+});
+
+it('cannot delete an event type that has an active upcoming confirmed booking', function () {
+    $host = User::factory()->create();
+    $eventType = EventType::factory()->create(['user_id' => $host->id]);
+    $booking = Booking::factory()->create([
+        'event_type_id' => $eventType->id,
+        'host_user_id' => $host->id,
+        'starts_at' => now()->addDay(),
+        'ends_at' => now()->addDay()->addMinutes(30),
+        'status' => BookingStatus::Confirmed,
+    ]);
+
+    $this->actingAs($host)
+        ->delete(route('event-types.destroy', $eventType))
+        ->assertStatus(422);
+
+    expect(EventType::find($eventType->id))->not->toBeNull()
+        ->and($booking->refresh()->status)->toBe(BookingStatus::Confirmed);
+});
+
+it('can delete an event type whose bookings are all past, cancelled, or completed', function () {
+    $host = User::factory()->create();
+    $eventType = EventType::factory()->create(['user_id' => $host->id]);
+    Booking::factory()->past()->create([
+        'event_type_id' => $eventType->id,
+        'host_user_id' => $host->id,
+    ]);
+    Booking::factory()->cancelled()->create([
+        'event_type_id' => $eventType->id,
+        'host_user_id' => $host->id,
+    ]);
+    Booking::factory()->past()->completed()->create([
+        'event_type_id' => $eventType->id,
+        'host_user_id' => $host->id,
+    ]);
+
+    $this->actingAs($host)
+        ->delete(route('event-types.destroy', $eventType))
+        ->assertRedirect(route('event-types.index'));
+
+    expect(EventType::find($eventType->id))->toBeNull();
 });

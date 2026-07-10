@@ -88,14 +88,25 @@ pass; it doesn't touch schema, slugs, or dependencies, so it doesn't trip the
 change-control approval gates (no new dependency is added — `actions/checkout`
 and `shivammathur/setup-php` are GitHub-hosted actions, not project deps).
 
-### 2. Unpaginated bookings index (weak point #10)
+### 2. Unpaginated bookings index (weak point #10) — SHIPPED 2026-07-10
 
-**Shortfall**: `BookingController::index` loads **all** of a host's bookings,
-eager-loads `eventType`, and splits upcoming/past in PHP
+**Resolved**: `BookingController::index` now cursor-paginates `past` bookings
+(`PAST_PER_PAGE = 15`, `orderByDesc('starts_at')->orderByDesc('id')` for a
+deterministic tiebreak) while `upcoming` stays fully eager — the dashboard and
+reminder command were verified to run their own independent bounded queries,
+so they never depended on the index's old unbounded shape. `Bookings/Index.vue`
+adds Older/Newer nav via a partial reload (`only: ['past']`). Test-first:
+`tests/Feature/BookingPaginationTest.php` proves bounded page weight (500-row
+seed still returns exactly 15), disjoint cursor pages including under tied
+`starts_at`, and that `upcoming` stays a plain unpaginated array. Suite: 211
+passed, pint + phpstan clean.
+
+**Shortfall (historical)**: `BookingController::index` loaded **all** of a
+host's bookings, eager-loaded `eventType`, and split upcoming/past in PHP
 (`app/Http/Controllers/BookingController.php:24-39`) — `->get()` with no
-`limit`/`paginate`. Fine at v1 scale (a few dozen bookings); becomes a real
-problem once a host accumulates hundreds of historical bookings — every page
-load pays for the full history, forever, even though only "upcoming" bookings
+`limit`/`paginate`. Fine at v1 scale (a few dozen bookings); became a real
+problem once a host accumulated hundreds of historical bookings — every page
+load paid for the full history, forever, even though only "upcoming" bookings
 are usually acted on.
 
 **Asset**: nobody has adopted Inertia v2 deferred/lazy-loading patterns yet —

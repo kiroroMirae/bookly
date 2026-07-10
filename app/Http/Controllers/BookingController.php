@@ -23,20 +23,26 @@ use Inertia\Response;
 
 class BookingController extends Controller
 {
+    private const PAST_PER_PAGE = 15;
+
     public function index(): Response
     {
         $now = Carbon::now();
 
-        $bookings = auth()->user()
-            ->bookings()
-            ->with('eventType', 'events')
-            ->orderBy('starts_at')
-            ->get()
-            ->groupBy(fn ($b) => $b->starts_at->gte($now) ? 'upcoming' : 'past');
-
         return Inertia::render('Bookings/Index', [
-            'upcoming' => $bookings->get('upcoming', collect())->values(),
-            'past' => $bookings->get('past', collect())->values(),
+            'upcoming' => fn () => auth()->user()
+                ->bookings()
+                ->with('eventType', 'events')
+                ->where('starts_at', '>=', $now)
+                ->orderBy('starts_at')
+                ->get(),
+            'past' => fn () => auth()->user()
+                ->bookings()
+                ->with('eventType', 'events')
+                ->where('starts_at', '<', $now)
+                ->orderByDesc('starts_at')
+                ->orderByDesc('id')
+                ->cursorPaginate(self::PAST_PER_PAGE),
         ]);
     }
 

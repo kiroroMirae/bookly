@@ -5,7 +5,7 @@ import { Head, useForm, router } from '@inertiajs/vue3';
 
 defineProps({
     upcoming: { type: Array, required: true },
-    past: { type: Array, required: true },
+    past: { type: Object, required: true },
 });
 
 const cancelForm = useForm({ cancellation_reason: '' });
@@ -24,6 +24,14 @@ const markStatus = (bookingId, status) => {
 const saveNotes = (booking) => {
     const notes = notesDrafts.value[booking.id] ?? booking.host_notes ?? '';
     router.patch(route('bookings.update', booking.id), { host_notes: notes }, { preserveScroll: true });
+};
+
+const goToPastPage = (url) => {
+    if (!url) {
+        return;
+    }
+
+    router.get(url, {}, { only: ['past'], preserveScroll: true, preserveState: true });
 };
 
 const EVENT_LABELS = {
@@ -139,12 +147,12 @@ const eventDetail = (event) => {
                         <h3 class="text-sm font-medium text-gray-700">Past</h3>
                     </div>
 
-                    <div v-if="past.length === 0" class="px-6 py-8 text-center text-sm text-gray-400">
+                    <div v-if="past.data.length === 0" class="px-6 py-8 text-center text-sm text-gray-400">
                         No past bookings.
                     </div>
 
                     <ul v-else class="divide-y divide-gray-100">
-                        <li v-for="booking in past" :key="booking.id" class="space-y-2 px-6 py-4">
+                        <li v-for="booking in past.data" :key="booking.id" class="space-y-2 px-6 py-4">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm font-medium text-gray-900">{{ booking.guest_name }}</p>
@@ -209,6 +217,29 @@ const eventDetail = (event) => {
                             </details>
                         </li>
                     </ul>
+
+                    <div
+                        v-if="past.prev_page_url || past.next_page_url"
+                        class="flex items-center justify-between border-t border-gray-200 px-6 py-3"
+                    >
+                        <button
+                            v-if="past.prev_page_url"
+                            type="button"
+                            @click="goToPastPage(past.prev_page_url)"
+                            class="text-xs text-indigo-600 hover:text-indigo-800"
+                        >
+                            Newer
+                        </button>
+                        <span v-else />
+                        <button
+                            v-if="past.next_page_url"
+                            type="button"
+                            @click="goToPastPage(past.next_page_url)"
+                            class="text-xs text-indigo-600 hover:text-indigo-800"
+                        >
+                            Older
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

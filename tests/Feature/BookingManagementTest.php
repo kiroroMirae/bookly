@@ -53,7 +53,7 @@ it('host sees their own bookings in the list', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page->component('Bookings/Index')
             ->has('upcoming', 1)
-            ->has('past', 0)
+            ->has('past.data', 0)
         );
 });
 
@@ -72,7 +72,7 @@ it('host does not see other hosts bookings', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page->component('Bookings/Index')
             ->has('upcoming', 0)
-            ->has('past', 0)
+            ->has('past.data', 0)
         );
 });
 
